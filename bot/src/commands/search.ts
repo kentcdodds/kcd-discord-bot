@@ -111,7 +111,7 @@ export const search: CommandFn = async interaction => {
 
 	const url = getURL(query)
 	if (url) {
-		return interaction.reply(`${toMessage}\n${url}`.trim())
+		return interaction.reply(`${toMessage} ${url}`.trim())
 	}
 
 	const searchResponse = await searchAPI(query)
@@ -124,7 +124,7 @@ export const search: CommandFn = async interaction => {
 
 	if (searchResponse.results.length === 1 && searchResponse.results[0]) {
 		const result = searchResponse.results[0]
-		return interaction.reply(`${toMessage}\n${result.url}`.trim())
+		return interaction.reply(`${toMessage} ${result.url}`.trim())
 	}
 
 	const didYouMean = searchResponse.results.length
