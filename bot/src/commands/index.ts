@@ -1,14 +1,20 @@
 import type * as Discord from 'discord.js'
 import { colors } from '../utils'
-import type { CommandFn } from './utils'
+import type { CommandFn, AutocompleteFn } from './utils'
 import { info } from './info'
-import { kif } from './kif'
+import { kif, autocompleteKif } from './kif'
+import { search, autocompleteSearch } from './search'
 
 const commands: Record<string, CommandFn> = {
 	info,
 	help,
 	kif,
+	search,
 } as const
+const autocompletes: Record<string, AutocompleteFn> = {
+	kif: autocompleteKif,
+	search: autocompleteSearch,
+}
 
 async function help(
 	interaction: Discord.CommandInteraction<Discord.CacheType>,
@@ -38,15 +44,24 @@ help.description = 'Get help on how to use the bot'
 
 export function setup(client: Discord.Client) {
 	client.on('interactionCreate', async interaction => {
-		if (!interaction.isCommand()) return
+		if (interaction.isCommand()) {
+			const { commandName } = interaction
 
-		const { commandName } = interaction
+			const command = commands[commandName]
+			if (!command) {
+				console.error(`Unknown command: ${commandName}`)
+				return
+			}
+			await command(interaction)
+		} else if (interaction.isAutocomplete()) {
+			const { commandName } = interaction
 
-		const command = commands[commandName]
-		if (!command) {
-			console.error(`Unknown command: ${commandName}`)
-			return
+			const autocomplete = autocompletes[commandName]
+			if (!autocomplete) {
+				console.error(`Unknown autocomplete: ${commandName}`)
+				return
+			}
+			await autocomplete(interaction)
 		}
-		await command(interaction)
 	})
 }

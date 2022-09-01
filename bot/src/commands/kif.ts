@@ -4,7 +4,7 @@ import type * as Discord from 'discord.js'
 import { matchSorter } from 'match-sorter'
 import * as Sentry from '@sentry/node'
 import { listify, getMember, getErrorMessage, botLog, colors } from '../utils'
-import type { CommandFn } from './utils'
+import type { AutocompleteFn, CommandFn } from './utils'
 import invariant from 'tiny-invariant'
 
 type KifData = {
@@ -35,7 +35,7 @@ async function getKifInfo(guild: Discord.Guild, { force = false } = {}) {
 	)
 		.json()
 		.then(
-			data => {
+			(data: any) => {
 				const kifsData = data as KifsRawData
 				return JSON.parse(
 					Buffer.from(kifsData.content, kifsData.encoding).toString(),
@@ -102,7 +102,7 @@ async function getKifInfo(guild: Discord.Guild, { force = false } = {}) {
 	return kifCache
 }
 
-async function getCloseMatches(guild: Discord.Guild, search: string) {
+async function matchSortKifs(guild: Discord.Guild, search: string) {
 	const { kifKeysWithoutEmoji } = await getKifInfo(guild)
 	const { default: leven } = await import('leven')
 	return Array.from(
@@ -119,12 +119,44 @@ async function getCloseMatches(guild: Discord.Guild, search: string) {
 			// does still match with match sorter.
 			...matchSorter(kifKeysWithoutEmoji, search),
 		]),
-	).slice(0, 6)
+	)
+}
+
+export const autocompleteKif: AutocompleteFn = async interaction => {
+	const { guild } = interaction
+	invariant(guild, 'guild is required')
+	const input = interaction.options.getFocused(true)
+	if (input.name === 'name') {
+		const { kifs } = await getKifInfo(guild)
+		const mached = matchSorter(Object.entries(kifs), input.value, {
+			keys: [
+				'0',
+				kif => kif[1].aliases ?? [],
+				kif => kif[1].emojiAliases ?? [],
+			],
+		})
+		const matches = mached.slice(0, 25)
+		await interaction.respond(
+			matches.map(([kifName, kifData]) => {
+				let displayName = kifName
+				const allAliases = [
+					...(kifData.aliases ?? []),
+					...(kifData.emojiAliases ?? []),
+				]
+				if (allAliases.length) {
+					displayName = `${displayName} (${listify(allAliases, {
+						stringify: JSON.stringify,
+					})})`
+				}
+				return { name: displayName, value: kifName }
+			}),
+		)
+	}
 }
 
 const handleKifCommand: CommandFn = async interaction => {
 	const { guild } = interaction
-	invariant(guild, 'name is required')
+	invariant(guild, 'guild is required')
 
 	const name = interaction.options.getString('name')
 	invariant(name, 'name is required')
@@ -143,7 +175,7 @@ const handleKifCommand: CommandFn = async interaction => {
 		return interaction.reply(`${toMessage}\n${kif}`.trim())
 	}
 
-	const closeMatches = await getCloseMatches(guild, name)
+	const closeMatches = (await matchSortKifs(guild, name)).slice(0, 6)
 	if (closeMatches.length === 1 && closeMatches[0]) {
 		const closestMatch = closeMatches[0]
 		const matchingKif = cache.kifMap[closestMatch]
@@ -172,8 +204,8 @@ handleKifCommand.help = async function help(interaction) {
 		content: `
 "kifs" are "Kent C. Dodds Gifs" and you can find a full list of available kifs here: <https://kcd.im/kifs>
 
-\`?kif amazed\` - Sends the "amazed" kif
-\`?kif 👊 @kentcdodds\` - Sends the "fist bump" kif to \`@kentcdodds\`
+\`/kif amazed\` - Sends the "amazed" kif
+\`/kif 👊 @kentcdodds\` - Sends the "fist bump" kif to \`@kentcdodds\`
 		`.trim(),
 	})
 }

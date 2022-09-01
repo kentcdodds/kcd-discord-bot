@@ -7,3 +7,7 @@ export type CommandFn = {
 		interaction: Discord.CommandInteraction<Discord.CacheType>,
 	) => Promise<unknown>
 }
+
+export type AutocompleteFn = (
+	interaction: Discord.AutocompleteInteraction<Discord.CacheType>,
+) => Promise<unknown>

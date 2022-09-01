@@ -27,12 +27,29 @@ const commands = [
 			option
 				.setName('name')
 				.setDescription('The name or alias of the kif.')
-				.setRequired(true),
+				.setRequired(true)
+				.setAutocomplete(true),
 		)
 		.addUserOption(option =>
 			option
 				.setName('user')
 				.setDescription('A user to post the kif to.')
+				.setRequired(false),
+		),
+	new SlashCommandBuilder()
+		.setName('search')
+		.setDescription(`Search Kent's content.`)
+		.addStringOption(option =>
+			option
+				.setName('query')
+				.setDescription('Your search query.')
+				.setRequired(true)
+				.setAutocomplete(true),
+		)
+		.addUserOption(option =>
+			option
+				.setName('user')
+				.setDescription('A user to share the result with.')
 				.setRequired(false),
 		),
 ].map(command => command.toJSON())

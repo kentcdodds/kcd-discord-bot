@@ -7,7 +7,7 @@
 		"esModuleInterop": true,
 		"jsx": "react-jsx",
 		"module": "CommonJS",
-		"moduleResolution": "node",
+		"moduleResolution": "Node16",
 		"resolveJsonModule": true,
 		"target": "ES2019",
 		"strict": true,
