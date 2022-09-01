@@ -25,3 +25,15 @@ export function getKcdOfficeHoursChannel(guild: Discord.Guild) {
 	if (channel?.type !== 'GUILD_TEXT') return null
 	return channel
 }
+
+export function getIntroductionsChannel(guild: Discord.Guild) {
+	const channel = guild.channels.cache.get(process.env.CHANNEL_ID_INTRODUCTIONS)
+	if (channel?.type !== 'GUILD_TEXT') return null
+	return channel
+}
+
+export function getTipsChannel(guild: Discord.Guild) {
+	const channel = guild.channels.cache.get(process.env.CHANNEL_ID_TIPS)
+	if (channel?.type !== 'GUILD_TEXT') return null
+	return channel
+}

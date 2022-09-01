@@ -27,7 +27,7 @@ async function cleanup(guild: TDiscord.Guild) {
 	return Promise.all(promises)
 }
 
-async function setup(client: TDiscord.Client) {
+export async function setup(client: TDiscord.Client) {
 	// prime the message cache for all channels
 	// this is important for situations when the bot gets restarted after
 	// it had just sent a self-destruct chat
@@ -46,5 +46,3 @@ async function setup(client: TDiscord.Client) {
 
 	cleanupGuildOnInterval(client, guild => cleanup(guild), 5000)
 }
-
-export { setup }

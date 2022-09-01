@@ -1,38 +1,39 @@
 import type * as TDiscord from 'discord.js'
 import { isModerator } from '../utils/roles'
-import { getMember, getTalkToBotsChannel } from './utils'
+import { getTalkToBotsChannel } from './utils'
 
-async function handleGuildMemberUpdate(
-	oldMember: TDiscord.GuildMember | TDiscord.PartialGuildMember,
-	newMember: TDiscord.GuildMember,
-) {
-	const oldHasModRole = isModerator(oldMember)
-	const newHasModRole = isModerator(newMember)
-	const isNewMod = newHasModRole && !oldHasModRole
-	if (isNewMod) {
-		await newMember.setNickname(`${newMember.displayName} ◆`)
-		return
-	}
-	return handleMember(newMember)
-}
+export function setup(client: TDiscord.Client) {
+	client.on('guildMemberUpdate', async (oldMember, member) => {
+		const oldHasModRole = isModerator(oldMember)
+		const newHasModRole = isModerator(member)
+		const isNewMod = newHasModRole && !oldHasModRole
+		const isDemotedMod = oldHasModRole && !newHasModRole
 
-async function handleMember(member: TDiscord.GuildMember | undefined | null) {
-	if (!member) return
-	const hasBadge = member.nickname?.includes('◆')
-	if (hasBadge && !isModerator(member)) {
-		await member.setNickname(member.displayName.replace(/◆/g, '').trim())
+		if (isNewMod) {
+			await member.setNickname(`${member.displayName} ◆`)
+			return
+		}
+
+		const nonModDisplayName = (member.nickname ?? member.displayName)
+			.replace(/◆/g, '')
+			.trim()
+
+		if (isDemotedMod) {
+			await member.setNickname(nonModDisplayName)
+			return
+		}
+
+		const hasBadge = member.nickname?.includes('◆')
+		if (!hasBadge) return
+		if (isModerator(member)) return
+
+		await member.setNickname(nonModDisplayName)
+
 		const botsChannel = getTalkToBotsChannel(member.guild)
-		if (!botsChannel) return
-		await botsChannel.send(
+		await botsChannel?.send(
 			`
 Hi ${member.user}, I noticed you added "◆" to your nickname. I'm afraid you can't do this because it's reserved for Moderators, so I've removed it.
-      `.trim(),
+			`.trim(),
 		)
-	}
+	})
 }
-
-async function handleNewMessage(message: TDiscord.Message) {
-	return handleMember(getMember(message.guild, message.author.id))
-}
-
-export { handleGuildMemberUpdate, handleNewMessage }

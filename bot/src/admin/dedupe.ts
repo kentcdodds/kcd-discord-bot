@@ -60,7 +60,8 @@ If you think your message is better suited in another channel please delete the 
 	}
 }
 
-function setup(client: TDiscord.Client) {
+export function setup(client: TDiscord.Client) {
+	client.on('messageCreate', dedupeMessages)
 	// prime the message cache for relevant channels
 	const guild = client.guilds.cache.find(({ name }) => name === 'KCD')
 	if (!guild) return
@@ -72,5 +73,3 @@ function setup(client: TDiscord.Client) {
 		void channel.messages.fetch({ limit: 30 })
 	}
 }
-
-export { dedupeMessages as handleNewMessage, setup }

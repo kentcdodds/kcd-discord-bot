@@ -19,3 +19,7 @@ export function isModerator(member: Member) {
 		({ id }) => id === process.env.ROLE_ID_MODERATORS,
 	)
 }
+
+export function isMember(member: Member) {
+	return member.roles.cache.some(({ id }) => id === process.env.ROLE_ID_MEMBER)
+}
