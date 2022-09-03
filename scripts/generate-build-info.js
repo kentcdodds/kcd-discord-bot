@@ -16,7 +16,7 @@ async function getCommit() {
 	if (!commit) return
 	try {
 		const data = await fetch(
-			`https://api.github.com/repos/remix-run/kcd-discord-bot/commits/${commit}`,
+			`https://api.github.com/repos/kentcdodds/kcd-discord-bot/commits/${commit}`,
 		).then(res => res.json())
 		return {
 			isDeployCommit: commit === 'HEAD' ? 'Unknown' : true,
@@ -27,7 +27,7 @@ async function getCommit() {
 			link: data.html_url,
 		}
 	} catch (error) {
-		return `Unable to get git commit info: ${error.message}`
+		return { error: `Unable to get git commit info: ${error.message}` }
 	}
 }
 

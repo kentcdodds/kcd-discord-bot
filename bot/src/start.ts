@@ -27,6 +27,7 @@ export async function start() {
 		commands.setup(client)
 		reactions.setup(client)
 		admin.setup(client)
+		void primeTheCache(client)
 
 		const guild = client.guilds.cache.find(
 			({ id }) => id === process.env.KCD_GUILD_ID,
@@ -63,4 +64,22 @@ export async function start() {
 		Sentry.captureMessage('Client logging out')
 		client.destroy()
 	}
+}
+
+async function primeTheCache(client: Discord.Client) {
+	const guildPartials = await client.guilds.fetch()
+	await Promise.all(
+		guildPartials.mapValues(async guildPartial => {
+			const guild = await guildPartial.fetch()
+			const channelPartials = await guild.channels.fetch()
+			return Promise.all(
+				channelPartials.mapValues(async channelPartial => {
+					const channel = await channelPartial.fetch()
+					if (channel.isTextBased()) {
+						await channel.messages.fetch({ limit: 30 })
+					}
+				}),
+			)
+		}),
+	)
 }

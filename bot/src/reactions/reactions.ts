@@ -121,8 +121,7 @@ async function report(messageReaction: Discord.MessageReaction) {
 		return
 	}
 
-	const moderatorsRole =
-		(await guild.roles.fetch(process.env.ROLE_ID_MODERATORS)) ?? 'Moderators'
+	const moderatorsRole = await guild.roles.fetch(process.env.ROLE_ID_MODERATORS)
 
 	const reportThread = await reportsChannel.threads.create({
 		name: `🚨 Report on ${offender.username}`,

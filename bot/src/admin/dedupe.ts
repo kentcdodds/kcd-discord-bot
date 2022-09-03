@@ -60,14 +60,4 @@ If you think your message is better suited in another channel please delete the 
 
 export function setup(client: TDiscord.Client) {
 	client.on('messageCreate', dedupeMessages)
-	// prime the message cache for relevant channels
-	const guild = client.guilds.cache.find(({ name }) => name === 'KCD')
-	if (!guild) return
-	const channels = Array.from(
-		guild.channels.cache.filter(ch => ch.isTextBased()).values(),
-	) as Array<TDiscord.TextBasedChannel>
-	for (const channel of channels) {
-		// ignore the returned promise. Fire and forget.
-		void channel.messages.fetch({ limit: 30 })
-	}
 }

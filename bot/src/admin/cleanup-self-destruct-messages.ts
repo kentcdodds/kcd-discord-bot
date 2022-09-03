@@ -28,21 +28,5 @@ async function cleanup(guild: TDiscord.Guild) {
 }
 
 export async function setup(client: TDiscord.Client) {
-	// prime the message cache for all channels
-	// this is important for situations when the bot gets restarted after
-	// it had just sent a self-destruct chat
-	await Promise.all(
-		[...client.guilds.cache.values()].map(async guild => {
-			const channels = [...guild.channels.cache.values()].filter(ch =>
-				ch.isTextBased(),
-			) as Array<TDiscord.TextBasedChannel>
-			return Promise.all(
-				[...channels.values()].map(channel => {
-					return channel.messages.fetch({ limit: 30 })
-				}),
-			)
-		}),
-	)
-
 	void cleanupGuildOnInterval(client, guild => cleanup(guild), 5000)
 }

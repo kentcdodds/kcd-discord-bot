@@ -8,7 +8,7 @@ async function handleNewReaction(
 ) {
 	if (messageReaction.partial) {
 		try {
-			await messageReaction.fetch()
+			messageReaction = await messageReaction.fetch()
 		} catch (error: unknown) {
 			console.error(
 				'Something went wrong when fetching the message reaction: ',
@@ -38,10 +38,6 @@ async function handleNewReaction(
 
 	const reactionFn = reactions[emoji.name]
 	if (!reactionFn) return
-
-	if (messageReaction.partial) {
-		messageReaction = await messageReaction.fetch()
-	}
 
 	await reactionFn(messageReaction)
 
@@ -83,22 +79,6 @@ async function handleNewReaction(
 }
 
 export async function setup(client: Discord.Client) {
-	const guildPartials = await client.guilds.fetch()
-	await Promise.all(
-		Array.from(guildPartials.values()).flatMap(async guildPartial => {
-			const guild = await guildPartial.fetch()
-			const channelPartials = await guild.channels.fetch()
-			return Promise.all(
-				Array.from(channelPartials.values()).map(async channelPartial => {
-					const channel = await channelPartial.fetch()
-					if (channel.isTextBased()) {
-						await channel.messages.fetch({ limit: 30 })
-					}
-				}),
-			)
-		}),
-	)
-
 	client.on('messageReactionAdd', (messageReaction, user) => {
 		// eslint-disable-next-line no-void
 		void handleNewReaction(messageReaction, user)
