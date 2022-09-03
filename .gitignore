@@ -2,6 +2,7 @@ node_modules
 
 /build
 /public/build
+/public/build-info.json
 .env
 
 /prisma/data.db
