@@ -20,6 +20,9 @@ const requiredEnvs = [
 	'ROLE_ID_EPIC_REACT',
 	'ROLE_ID_MODERATORS',
 	'ROLE_ID_MEMBER',
+	'ROLE_ID_RED',
+	'ROLE_ID_YELLOW',
+	'ROLE_ID_BLUE',
 ] as const
 for (const env of requiredEnvs) {
 	invariant(process.env[env], `${env} is required`)
@@ -41,6 +44,9 @@ declare global {
 			ROLE_ID_EPIC_REACT: string
 			ROLE_ID_MODERATORS: string
 			ROLE_ID_MEMBER: string
+			ROLE_ID_RED: string
+			ROLE_ID_YELLOW: string
+			ROLE_ID_BLUE: string
 		}
 	}
 }

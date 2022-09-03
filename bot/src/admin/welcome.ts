@@ -1,5 +1,5 @@
 import * as Discord from 'discord.js'
-import { isMember } from '../utils/roles'
+import { getMemberTeam, isMember } from '../utils/roles'
 import {
 	botLog,
 	getBotLogChannel,
@@ -38,24 +38,34 @@ I'm your friendly robot 🤖. To learn more about me, go ahead and run the comma
 I'd suggest you checkout ${tips} to learn more about the server and how to get the most out of it.
 
 We'd love to get to know you. Why don't you introduce yourself in ${introductions}? Here's a template you can use for starters:
-
+			`.trim(),
+		)
+		await thread.send(
+			`
 🌐 I'm from: 
 🏢 I work at: 
 💻 I work with this tech: 
 🍎 I snack on: 
 🤪 I really enjoy: 
-
-We hope you enjoy your time here! 🎉
 			`.trim(),
 		)
-		void updateOnboardingBotLog(member, () =>
-			getBotLogEmbed(member, {
+		await thread.send('We hope you enjoy your time here! 🎉')
+		void updateOnboardingBotLog(member, () => {
+			const memberTeam = getMemberTeam(member)
+			const colors = {
+				BLUE: Discord.Colors.Blue,
+				RED: Discord.Colors.Red,
+				YELLOW: Discord.Colors.Yellow,
+				UNASSIGNED: Discord.Colors.NotQuiteBlack,
+			}
+			return getBotLogEmbed(member, {
+				color: colors[memberTeam],
 				fields: [
-					{ name: 'Status', value: `onboarded` },
-					{ name: 'Welcome channel', value: `${thread}` },
+					{ name: 'Status', value: `onboarded`, inline: true },
+					{ name: 'Welcome channel', value: `${thread}`, inline: true },
 				],
-			}),
-		)
+			})
+		})
 	}
 
 	client.on('guildMemberAdd', async member => {
@@ -64,7 +74,7 @@ We hope you enjoy your time here! 🎉
 		} else {
 			void updateOnboardingBotLog(member, () =>
 				getBotLogEmbed(member, {
-					fields: [{ name: 'Status', value: `onboarding` }],
+					fields: [{ name: 'Status', value: `onboarding`, inline: true }],
 				}),
 			)
 		}
@@ -86,7 +96,7 @@ function getBotLogEmbed(
 	member: Discord.GuildMember,
 	{ author, fields = [], ...overrides }: Partial<Discord.APIEmbed>,
 ): Discord.APIEmbed {
-	return {
+	const embed: Discord.APIEmbed = {
 		title: '👋 New Member',
 		author: {
 			name: member.displayName,
@@ -96,9 +106,10 @@ function getBotLogEmbed(
 		},
 		color: Discord.Colors.Orange,
 		description: `${member} has joined the server.`,
-		fields: [{ name: 'Member ID', value: member.id }, ...fields],
+		fields: [{ name: 'Member ID', value: member.id, inline: true }, ...fields],
 		...overrides,
 	}
+	return embed
 }
 
 function updateOnboardingBotLog(
