@@ -1,6 +1,6 @@
 const path = require('path')
 const fs = require('fs')
-require('@remix-run/node/globals').installGlobals()
+require('@remix-run/node/dist/globals').installGlobals()
 
 let existingBuildInfo = {}
 try {
