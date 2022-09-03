@@ -9,6 +9,20 @@ import {
 	getTipsChannel,
 } from './utils'
 
+const colors = {
+	BLUE: Discord.Colors.Blue,
+	RED: Discord.Colors.Red,
+	YELLOW: Discord.Colors.Yellow,
+	UNASSIGNED: Discord.Colors.NotQuiteBlack,
+}
+
+const emoji = {
+	BLUE: '🔵',
+	RED: '🔴',
+	YELLOW: '🟡',
+	UNASSIGNED: '⚫',
+}
+
 export function setup(client: Discord.Client) {
 	async function welcomeNewMember(member: Discord.GuildMember) {
 		const introductions = getIntroductionsChannel(member.guild)
@@ -52,16 +66,15 @@ We'd love to get to know you. Why don't you introduce yourself in ${introduction
 		await thread.send('We hope you enjoy your time here! 🎉')
 		void updateOnboardingBotLog(member, () => {
 			const memberTeam = getMemberTeam(member)
-			const colors = {
-				BLUE: Discord.Colors.Blue,
-				RED: Discord.Colors.Red,
-				YELLOW: Discord.Colors.Yellow,
-				UNASSIGNED: Discord.Colors.NotQuiteBlack,
-			}
 			return getBotLogEmbed(member, {
 				color: colors[memberTeam],
 				fields: [
 					{ name: 'Status', value: `onboarded`, inline: true },
+					{
+						name: 'Team',
+						value: `${memberTeam} ${emoji[memberTeam]}`,
+						inline: true,
+					},
 					{ name: 'Welcome channel', value: `${thread}`, inline: true },
 				],
 			})
@@ -83,11 +96,29 @@ We'd love to get to know you. Why don't you introduce yourself in ${introduction
 	client.on('guildMemberUpdate', async (oldMember, member) => {
 		const oldHasMemberRole = isMember(oldMember)
 		const newHasMemberRole = isMember(member)
+		const oldMemberTeam = getMemberTeam(oldMember)
+		const newMemberTeam = getMemberTeam(member)
 		const isNewMember = newHasMemberRole && !oldHasMemberRole
 
 		if (isNewMember) {
 			member = await member.fetch()
 			return welcomeNewMember(member)
+		}
+		if (oldMemberTeam !== newMemberTeam) {
+			void updateOnboardingBotLog(member, () => {
+				const memberTeam = getMemberTeam(member)
+				return getBotLogEmbed(member, {
+					color: colors[memberTeam],
+					fields: [
+						{ name: 'Status', value: `connected`, inline: true },
+						{
+							name: 'Team',
+							value: `${memberTeam} ${emoji[memberTeam]}`,
+							inline: true,
+						},
+					],
+				})
+			})
 		}
 	})
 }
