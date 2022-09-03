@@ -1,7 +1,6 @@
 import * as Discord from 'discord.js'
 import { HTTPError } from 'discord.js'
 import { getBotLogChannel, getTalkToBotsChannel } from './channels'
-import { setIntervalAsync } from 'set-interval-async/dynamic'
 
 export const getMessageLink = (msg: Discord.Message | Discord.PartialMessage) =>
 	`https://discordapp.com/channels/${msg.guild?.id ?? '@me'}/${
@@ -71,11 +70,12 @@ export function botLog(
 }
 
 // read up on dynamic setIntervalAsync here: https://github.com/ealmansi/set-interval-async#dynamic-and-fixed-setintervalasync
-export function cleanupGuildOnInterval(
+export async function cleanupGuildOnInterval(
 	client: Discord.Client,
 	cb: (client: Discord.Guild) => Promise<unknown>,
 	interval: number,
 ) {
+	const { setIntervalAsync } = await import('set-interval-async/dynamic')
 	setIntervalAsync(async () => {
 		try {
 			await Promise.all(Array.from(client.guilds.cache.values()).map(cb))

@@ -44,5 +44,5 @@ export async function setup(client: TDiscord.Client) {
 		}),
 	)
 
-	cleanupGuildOnInterval(client, guild => cleanup(guild), 5000)
+	void cleanupGuildOnInterval(client, guild => cleanup(guild), 5000)
 }

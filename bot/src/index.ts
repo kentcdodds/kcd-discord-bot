@@ -50,6 +50,7 @@ export const ref: { cleanup: Function | undefined } = {
 }
 
 if (process.env.NODE_ENV === 'production') {
+	invariant(process.env.SENTRY_DSN, 'SENTRY_DSN is required')
 	Sentry.init({
 		dsn: process.env.SENTRY_DSN,
 		tracesSampleRate: 0.3,
