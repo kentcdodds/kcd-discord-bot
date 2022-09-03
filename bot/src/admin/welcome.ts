@@ -38,7 +38,7 @@ export function setup(client: Discord.Client) {
 			type: canMakePrivateThreads
 				? Discord.ChannelType.GuildPrivateThread
 				: Discord.ChannelType.GuildPublicThread,
-			autoArchiveDuration: 1440,
+			autoArchiveDuration: Discord.ThreadAutoArchiveDuration.OneHour,
 			name: `Welcome ${member.user.username} 👋`,
 			reason: `${member.user.username} joined the server`,
 		})
@@ -52,7 +52,7 @@ I'm your friendly robot 🤖. To learn more about me, go ahead and run the comma
 I'd suggest you checkout ${tips} to learn more about the server and how to get the most out of it.
 
 We'd love to get to know you. Why don't you introduce yourself in ${introductions}? Here's a template you can use for starters:
-			`.trim(),
+			`.trim() + '\n',
 		)
 		await thread.send(
 			`
@@ -60,8 +60,8 @@ We'd love to get to know you. Why don't you introduce yourself in ${introduction
 🏢 I work at: 
 💻 I work with this tech: 
 🍎 I snack on: 
-🤪 I really enjoy: 
-			`.trim(),
+🤪 I really enjoy:
+			`.trim() + ' \n',
 		)
 		await thread.send('We hope you enjoy your time here! 🎉')
 		void updateOnboardingBotLog(member, () => {
