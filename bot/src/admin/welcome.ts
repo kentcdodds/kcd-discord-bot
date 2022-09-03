@@ -1,6 +1,14 @@
 import type * as Discord from 'discord.js'
 import { isMember } from '../utils/roles'
-import { getIntroductionsChannel, getTipsChannel } from './utils'
+import {
+	botLog,
+	colors,
+	getBotLogChannel,
+	getErrorMessage,
+	getIntroductionsChannel,
+	getMemberLink,
+	getTipsChannel,
+} from './utils'
 
 export function setup(client: Discord.Client) {
 	async function welcomeNewMember(member: Discord.GuildMember) {
@@ -40,11 +48,25 @@ We'd love to get to know you. Why don't you introduce yourself in ${introduction
 We hope you enjoy your time here! 🎉
 			`.trim(),
 		)
+		void updateOnboardingBotLog(member, () =>
+			getBotLogEmbed(member, {
+				fields: [
+					{ name: 'Status', value: `onboarded` },
+					{ name: 'Welcome channel', value: `${thread}` },
+				],
+			}),
+		)
 	}
 
 	client.on('guildMemberAdd', async member => {
 		if (isMember(member)) {
-			return welcomeNewMember(member)
+			await welcomeNewMember(member)
+		} else {
+			void updateOnboardingBotLog(member, () =>
+				getBotLogEmbed(member, {
+					fields: [{ name: 'Status', value: `onboarding` }],
+				}),
+			)
 		}
 	})
 
@@ -58,4 +80,59 @@ We hope you enjoy your time here! 🎉
 			return welcomeNewMember(member)
 		}
 	})
+}
+
+function getBotLogEmbed(
+	member: Discord.GuildMember,
+	{ author, fields = [], ...overrides }: Partial<Discord.MessageEmbedOptions>,
+): Discord.MessageEmbedOptions {
+	return {
+		title: '👋 New Member',
+		author: {
+			name: member.displayName,
+			iconURL: member.user.avatarURL() ?? member.user.defaultAvatarURL,
+			url: getMemberLink(member),
+			...author,
+		},
+		color: colors.base0E,
+		description: `${member} has joined the server.`,
+		fields: [{ name: 'Member ID', value: member.id }, ...fields],
+		...overrides,
+	}
+}
+
+function updateOnboardingBotLog(
+	member: Discord.GuildMember,
+	updatedEmbed: () => Discord.MessageEmbedOptions,
+) {
+	let botLogMessage
+	try {
+		const botsChannel = getBotLogChannel(member.guild)
+		if (!botsChannel) return
+
+		botLogMessage = botsChannel.messages.cache.find(msg =>
+			msg.embeds.some(embd => {
+				if (!embd.title || !/New Member/i.test(embd.title)) return false
+
+				return embd.fields.find(field => {
+					return /Member ID/i.test(field.name) && field.value === member.id
+				})
+			}),
+		)
+	} catch (error: unknown) {
+		// ignore errors for logs...
+		console.error(
+			`Error trying to get the botLogMessage to update`,
+			getErrorMessage(error),
+		)
+	}
+	if (botLogMessage) {
+		try {
+			return botLogMessage.edit({ embeds: [updatedEmbed()] })
+		} catch {
+			// ignore
+		}
+	} else {
+		return botLog(member.guild, updatedEmbed)
+	}
 }
