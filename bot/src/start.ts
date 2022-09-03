@@ -74,9 +74,15 @@ async function primeTheCache(client: Discord.Client) {
 			const channelPartials = await guild.channels.fetch()
 			return Promise.all(
 				channelPartials.mapValues(async channelPartial => {
-					const channel = await channelPartial.fetch()
-					if (channel.isTextBased()) {
+					if (channelPartial?.isTextBased()) {
+						const channel = await channelPartial.fetch()
 						await channel.messages.fetch({ limit: 30 })
+						if (channel.type === Discord.ChannelType.GuildText) {
+							const results = await channel.threads.fetch()
+							for (const [, thread] of results.threads) {
+								await thread.messages.fetch({ limit: 30 })
+							}
+						}
 					}
 				}),
 			)
