@@ -1,5 +1,4 @@
-import type * as Discord from 'discord.js'
-import { colors } from '../utils'
+import * as Discord from 'discord.js'
 import type { CommandFn, AutocompleteFn } from './utils'
 import { info } from './info'
 import { kif, autocompleteKif } from './kif'
@@ -24,7 +23,7 @@ async function help(
 		embeds: [
 			{
 				title: '💁 Bot Help',
-				color: colors.base0E,
+				color: Discord.Colors.Purple,
 				description: `Here's some handy things you can do with the bot:`,
 				fields: [
 					...Object.entries(commands).map(([commandName, fn]) => ({

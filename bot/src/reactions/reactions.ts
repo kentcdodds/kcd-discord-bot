@@ -1,6 +1,5 @@
-import type * as TDiscord from 'discord.js'
+import * as Discord from 'discord.js'
 import {
-	colors,
 	getKcdOfficeHoursChannel,
 	getMemberLink,
 	getMessageLink,
@@ -9,7 +8,7 @@ import {
 } from '../utils'
 
 type ReactionFn = {
-	(message: TDiscord.MessageReaction): Promise<unknown>
+	(message: Discord.MessageReaction): Promise<unknown>
 	description?: string
 }
 
@@ -24,7 +23,7 @@ const reactions: Record<string, ReactionFn> = {
 	botcall: callKent,
 } as const
 
-async function help(messageReaction: TDiscord.MessageReaction) {
+async function help(messageReaction: Discord.MessageReaction) {
 	void messageReaction.remove()
 	const guild = messageReaction.message.guild
 	if (!guild) return
@@ -40,7 +39,7 @@ async function help(messageReaction: TDiscord.MessageReaction) {
 		)
 	}
 	const guildEmojis = await guild.emojis.fetch()
-	const reactionFields: Array<TDiscord.EmbedFieldData> = []
+	const reactionFields: Array<Discord.APIEmbedField> = []
 	for (const [reactionName, { description }] of Object.entries(reactions)) {
 		const emoji = guildEmojis.find(emoji => emoji.name === reactionName)
 		reactionFields.push({
@@ -53,7 +52,7 @@ async function help(messageReaction: TDiscord.MessageReaction) {
 		embeds: [
 			{
 				title: '🛎 Reactions Help',
-				color: colors.base06,
+				color: Discord.Colors.Orange,
 				description: `Here are the available bot reactions:`,
 				fields: reactionFields,
 			},
@@ -62,7 +61,7 @@ async function help(messageReaction: TDiscord.MessageReaction) {
 }
 help.description = 'Lists available bot reactions'
 
-async function callKent(messageReaction: TDiscord.MessageReaction) {
+async function callKent(messageReaction: Discord.MessageReaction) {
 	await messageReaction.message.reply(
 		`
 This looks like a great question for Kent's "Call Kent Podcast": https://kentcdodds.com/call
@@ -73,7 +72,7 @@ Simply create an account on kentcdodds.com, then go to <https://kentcdodds.com/c
 	await messageReaction.remove()
 }
 
-async function officeHours(messageReaction: TDiscord.MessageReaction) {
+async function officeHours(messageReaction: Discord.MessageReaction) {
 	const message = messageReaction.message
 
 	const guild = message.guild
@@ -88,7 +87,7 @@ async function officeHours(messageReaction: TDiscord.MessageReaction) {
 	await messageReaction.remove()
 }
 
-async function dontAskToAsk(messageReaction: TDiscord.MessageReaction) {
+async function dontAskToAsk(messageReaction: Discord.MessageReaction) {
 	const message = messageReaction.message
 	await message.reply(
 		`We're happy to answer your questions if we can, so you don't need to ask if you can ask. Learn more: <https://dontasktoask.com>`,
@@ -96,7 +95,7 @@ async function dontAskToAsk(messageReaction: TDiscord.MessageReaction) {
 	await messageReaction.remove()
 }
 
-async function report(messageReaction: TDiscord.MessageReaction) {
+async function report(messageReaction: Discord.MessageReaction) {
 	void messageReaction.remove()
 	const guild = messageReaction.message.guild
 	if (!guild) {
@@ -127,9 +126,9 @@ async function report(messageReaction: TDiscord.MessageReaction) {
 
 	const reportThread = await reportsChannel.threads.create({
 		name: `🚨 Report on ${offender.username}`,
-		autoArchiveDuration: 'MAX',
+		autoArchiveDuration: Discord.ThreadAutoArchiveDuration.OneWeek,
 		invitable: true,
-		type: 'GUILD_PUBLIC_THREAD',
+		type: Discord.ChannelType.GuildPublicThread,
 	})
 
 	await reportThread.send(
@@ -139,11 +138,11 @@ async function report(messageReaction: TDiscord.MessageReaction) {
 		embeds: [
 			{
 				title: '🚨 User Report',
-				color: colors.base08,
+				color: Discord.Colors.Red,
 				description: `A user has reported a message.`,
 				author: {
 					name: offender.username ?? 'Unknown',
-					iconURL: offender.avatarURL() ?? offender.defaultAvatarURL,
+					icon_url: offender.avatarURL() ?? offender.defaultAvatarURL,
 					url: getMemberLink(offender),
 				},
 				fields: [
@@ -172,13 +171,13 @@ async function report(messageReaction: TDiscord.MessageReaction) {
 }
 report.description = 'Reports a message to the server moderators to look at.'
 
-async function ask(messageReaction: TDiscord.MessageReaction) {
+async function ask(messageReaction: Discord.MessageReaction) {
 	void messageReaction.remove()
 	const reply = `Hi ${messageReaction.message.author} 👋\nWe appreciate your question and we'll do our best to help you when we can. Could you please give us more details? Please follow the guidelines in <https://rmx.as/ask> (especially the part about making a <https://rmx.as/repro>) and then we'll try to answer your question.`
 	const { channel, author, guild, id } = messageReaction.message
 	if (!guild || !channel || !author) return
 
-	if (channel.type === 'GUILD_TEXT') {
+	if (channel.type === Discord.ChannelType.GuildText) {
 		const thread = await channel.threads.create({
 			name: `🧵 Thread for ${author.username}`,
 			startMessage: id,
@@ -193,7 +192,7 @@ async function ask(messageReaction: TDiscord.MessageReaction) {
 }
 ask.description = `Creates a thread for the message and asks for more details about a question. Useful if you know the question needs more details, but you can't commit to replying when they come.`
 
-async function doubleMessage(messageReaction: TDiscord.MessageReaction) {
+async function doubleMessage(messageReaction: Discord.MessageReaction) {
 	void messageReaction.remove()
 	await messageReaction.message.reply(
 		`Please avoid posting the same thing in multiple channels. Choose the best channel, and wait for a response there. Please delete the other message to avoid fragmenting the answers and causing confusion. Thanks!`,
@@ -201,12 +200,12 @@ async function doubleMessage(messageReaction: TDiscord.MessageReaction) {
 }
 doubleMessage.description = `Replies to the message telling the user to avoid posting the same question in multiple channels.`
 
-async function thread(messageReaction: TDiscord.MessageReaction) {
+async function thread(messageReaction: Discord.MessageReaction) {
 	void messageReaction.remove()
 	const { channel, author, guild, id } = messageReaction.message
 	if (!guild || !channel || !author) return
 
-	if (channel.type === 'GUILD_TEXT') {
+	if (channel.type === Discord.ChannelType.GuildText) {
 		const thread = await channel.threads.create({
 			name: `🧵 Thread for ${author.username}`,
 			startMessage: id,

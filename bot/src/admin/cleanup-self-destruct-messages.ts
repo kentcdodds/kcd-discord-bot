@@ -2,8 +2,8 @@ import type * as TDiscord from 'discord.js'
 import { cleanupGuildOnInterval, getSelfDestructTime } from './utils'
 
 async function cleanup(guild: TDiscord.Guild) {
-	const channels = Array.from(guild.channels.cache.values()).filter(ch =>
-		ch.isText(),
+	const channels = [...guild.channels.cache.values()].filter(ch =>
+		ch.isTextBased(),
 	) as Array<TDiscord.TextBasedChannel>
 	if (!guild.client.user) return
 
@@ -11,7 +11,7 @@ async function cleanup(guild: TDiscord.Guild) {
 	const promises = []
 
 	for (const channel of channels) {
-		for (const message of Array.from(channel.messages.cache.values())) {
+		for (const message of [...channel.messages.cache.values()]) {
 			if (message.author.id === botId) {
 				const timeToSelfDestruct = getSelfDestructTime(message.content)
 				if (
@@ -32,12 +32,12 @@ export async function setup(client: TDiscord.Client) {
 	// this is important for situations when the bot gets restarted after
 	// it had just sent a self-destruct chat
 	await Promise.all(
-		Array.from(client.guilds.cache.values()).map(async guild => {
-			const channels = Array.from(guild.channels.cache.values()).filter(ch =>
-				ch.isText(),
+		[...client.guilds.cache.values()].map(async guild => {
+			const channels = [...guild.channels.cache.values()].filter(ch =>
+				ch.isTextBased(),
 			) as Array<TDiscord.TextBasedChannel>
 			return Promise.all(
-				Array.from(channels.values()).map(channel => {
+				[...channels.values()].map(channel => {
 					return channel.messages.fetch({ limit: 30 })
 				}),
 			)

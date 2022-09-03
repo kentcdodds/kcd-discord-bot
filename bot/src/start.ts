@@ -5,7 +5,6 @@ import * as reactions from './reactions'
 import * as admin from './admin'
 import {
 	botLog,
-	colors,
 	getBuildTimeInfo,
 	getCommitInfo,
 	getStartTimeInfo,
@@ -15,23 +14,19 @@ import {
 export async function start() {
 	const client = new Discord.Client({
 		intents: [
-			Discord.Intents.FLAGS.GUILDS,
-			Discord.Intents.FLAGS.GUILD_MEMBERS,
-			Discord.Intents.FLAGS.GUILD_MESSAGES,
-			Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+			Discord.GatewayIntentBits.Guilds,
+			Discord.GatewayIntentBits.MessageContent,
+			Discord.GatewayIntentBits.GuildMembers,
+			Discord.GatewayIntentBits.GuildMessageReactions,
 		],
 	})
 
-	// setup all parts of the bot here
-	commands.setup(client)
-	reactions.setup(client)
-	admin.setup(client)
-
-	Sentry.captureMessage('Logging in client')
-	void client.login(process.env.DISCORD_BOT_TOKEN)
-
 	client.on('ready', () => {
 		Sentry.captureMessage('Client logged in.')
+		// setup all parts of the bot here
+		commands.setup(client)
+		reactions.setup(client)
+		admin.setup(client)
 
 		const guild = client.guilds.cache.find(
 			({ id }) => id === process.env.KCD_GUILD_ID,
@@ -49,7 +44,7 @@ export async function start() {
 					: null
 				return {
 					title: '🤖 BOT Started',
-					color: colors.base0B,
+					color: Discord.Colors.Green,
 					description: `Logged in and ready to go. Here's some info on the running bot:`,
 					fields: [
 						{ name: 'Startup', value: getStartTimeInfo(), inline: true },
@@ -60,6 +55,9 @@ export async function start() {
 			})
 		}
 	})
+
+	Sentry.captureMessage('Logging in client')
+	void client.login(process.env.DISCORD_BOT_TOKEN)
 
 	return async function cleanup() {
 		Sentry.captureMessage('Client logging out')

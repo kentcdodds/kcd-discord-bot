@@ -1,16 +1,14 @@
-import type * as TDiscord from 'discord.js'
+import * as Discord from 'discord.js'
 import { HTTPError } from 'discord.js'
 import { getBotLogChannel, getTalkToBotsChannel } from './channels'
 import { setIntervalAsync } from 'set-interval-async/dynamic'
 
-export const getMessageLink = (
-	msg: TDiscord.Message | TDiscord.PartialMessage,
-) =>
+export const getMessageLink = (msg: Discord.Message | Discord.PartialMessage) =>
 	`https://discordapp.com/channels/${msg.guild?.id ?? '@me'}/${
 		msg.channel.id
 	}/${msg.id}`
 
-export const getMemberLink = (member: TDiscord.GuildMember | TDiscord.User) =>
+export const getMemberLink = (member: Discord.GuildMember | Discord.User) =>
 	`https://discord.com/users/${member.id}`
 
 function getErrorStack(error: unknown) {
@@ -25,20 +23,20 @@ export function getErrorMessage(error: unknown) {
 	return 'Unknown Error'
 }
 
-export function getMember(guild: TDiscord.Guild | null, memberId: string) {
+export function getMember(guild: Discord.Guild | null, memberId: string) {
 	// somehow the guild isn't always accessible
 	if (!guild) return null
 	return guild.members.cache.find(({ user }) => user.id === memberId)
 }
 
 export function botLog(
-	guild: TDiscord.Guild,
-	messageFn: () => string | TDiscord.MessageEmbedOptions | undefined,
+	guild: Discord.Guild,
+	messageFn: () => string | Discord.APIEmbed | undefined,
 ) {
 	const botsChannel = getBotLogChannel(guild)
 	if (!botsChannel) return
 
-	let message: TDiscord.MessageOptions
+	let message: Discord.MessageOptions
 	try {
 		const result = messageFn()
 		if (!result) return
@@ -59,10 +57,11 @@ export function botLog(
 	return Promise.resolve()
 		.then(() => botsChannel.send(message))
 		.catch((error: unknown) => {
-			const messageSummary =
-				message.content ??
-				message.embeds?.[0]?.title ??
-				message.embeds?.[0]?.description
+			let messageSummary = message.content
+			if (!messageSummary && message.embeds?.[0] instanceof Discord.Embed) {
+				messageSummary =
+					message.embeds[0].title ?? message.embeds[0].description
+			}
 			console.error(
 				`Unable to log message: "${messageSummary}"`,
 				getErrorStack(error),
@@ -73,13 +72,14 @@ export function botLog(
 
 // read up on dynamic setIntervalAsync here: https://github.com/ealmansi/set-interval-async#dynamic-and-fixed-setintervalasync
 export function cleanupGuildOnInterval(
-	client: TDiscord.Client,
-	cb: (client: TDiscord.Guild) => Promise<unknown>,
+	client: Discord.Client,
+	cb: (client: Discord.Guild) => Promise<unknown>,
 	interval: number,
 ) {
 	setIntervalAsync(async () => {
 		try {
-			return await Promise.all(Array.from(client.guilds.cache.values()).map(cb))
+			await Promise.all(Array.from(client.guilds.cache.values()).map(cb))
+			return
 		} catch (error) {
 			if (error instanceof HTTPError) {
 				// ignore HTTPErrors. If they get to this point, there's not much
@@ -102,21 +102,7 @@ export function typedBoolean<T>(
 	return Boolean(value)
 }
 
-async function hasReactionFromUser(
-	message: TDiscord.Message,
-	host: TDiscord.GuildMember,
-	emoji: string,
-) {
-	const reaction = message.reactions.cache.get(emoji)
-	if (!reaction) return false
-	const usersWhoReacted = await reaction.users.fetch()
-	return usersWhoReacted.some(user => user.id === host.id)
-}
-
-export async function sendBotMessageReply(
-	msg: TDiscord.Message,
-	reply: string,
-) {
+export async function sendBotMessageReply(msg: Discord.Message, reply: string) {
 	const { guild, channel } = msg
 	if (!guild) return
 
@@ -136,7 +122,7 @@ _Replying to ${msg.author} <${getMessageLink(msg)}>_
 ${reply}
       `.trim(),
 		)
-		if (channel.isText()) {
+		if (channel.isTextBased()) {
 			return sendSelfDestructMessage(
 				channel,
 				`Hey ${msg.author}, I sent you a message here: ${getMessageLink(
@@ -156,7 +142,7 @@ const timeToMs = {
 }
 
 export async function sendSelfDestructMessage(
-	channel: TDiscord.TextBasedChannel,
+	channel: Discord.TextBasedChannel,
 	messageContent: string,
 	{
 		time = 10,
@@ -187,6 +173,5 @@ export function getSelfDestructTime(messageContent: string) {
 }
 
 export * from './build-info'
-export * as colors from './colors'
 export * from './channels'
 export * from './listify'

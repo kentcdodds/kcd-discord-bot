@@ -1,9 +1,5 @@
-import {
-	colors,
-	getBuildTimeInfo,
-	getCommitInfo,
-	getStartTimeInfo,
-} from '../utils'
+import * as Discord from 'discord.js'
+import { getBuildTimeInfo, getCommitInfo, getStartTimeInfo } from '../utils'
 import type { CommandFn } from './utils'
 
 export const info: CommandFn = async interaction => {
@@ -13,7 +9,7 @@ export const info: CommandFn = async interaction => {
 		embeds: [
 			{
 				title: 'ℹ️ Bot info',
-				color: colors.base0B,
+				color: Discord.Colors.Blue,
 				description: `Here's some info about the currently running bot:`,
 				fields: [
 					...(commitInfo

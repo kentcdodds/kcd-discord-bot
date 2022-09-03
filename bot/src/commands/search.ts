@@ -102,8 +102,8 @@ export const search: CommandFn = async interaction => {
 	const { guild } = interaction
 	invariant(guild, 'guild is required')
 
-	const query = interaction.options.getString('query')
-	invariant(query, 'query is required')
+	const query = interaction.options.get('query')?.value
+	invariant(typeof query === 'string', 'query must be a string')
 
 	const toUser = interaction.options.getUser('user')
 	const toMember = toUser ? getMember(guild, toUser.id) : null

@@ -1,8 +1,7 @@
-import type * as Discord from 'discord.js'
+import * as Discord from 'discord.js'
 import { isMember } from '../utils/roles'
 import {
 	botLog,
-	colors,
 	getBotLogChannel,
 	getErrorMessage,
 	getIntroductionsChannel,
@@ -17,13 +16,14 @@ export function setup(client: Discord.Client) {
 		if (!introductions) return
 		if (!tips) return
 
-		const canMakePrivateThreads = ['TIER_2', 'TIER_3'].includes(
-			member.guild.premiumTier,
-		)
+		const canMakePrivateThreads = [
+			Discord.GuildPremiumTier.Tier2,
+			Discord.GuildPremiumTier.Tier3,
+		].includes(member.guild.premiumTier)
 		const thread = await introductions.threads.create({
 			type: canMakePrivateThreads
-				? 'GUILD_PRIVATE_THREAD'
-				: 'GUILD_PUBLIC_THREAD',
+				? Discord.ChannelType.GuildPrivateThread
+				: Discord.ChannelType.GuildPublicThread,
 			autoArchiveDuration: 1440,
 			name: `Welcome ${member.user.username} 👋`,
 			reason: `${member.user.username} joined the server`,
@@ -84,17 +84,17 @@ We hope you enjoy your time here! 🎉
 
 function getBotLogEmbed(
 	member: Discord.GuildMember,
-	{ author, fields = [], ...overrides }: Partial<Discord.MessageEmbedOptions>,
-): Discord.MessageEmbedOptions {
+	{ author, fields = [], ...overrides }: Partial<Discord.APIEmbed>,
+): Discord.APIEmbed {
 	return {
 		title: '👋 New Member',
 		author: {
 			name: member.displayName,
-			iconURL: member.user.avatarURL() ?? member.user.defaultAvatarURL,
+			icon_url: member.user.avatarURL() ?? member.user.defaultAvatarURL,
 			url: getMemberLink(member),
 			...author,
 		},
-		color: colors.base0E,
+		color: Discord.Colors.Orange,
 		description: `${member} has joined the server.`,
 		fields: [{ name: 'Member ID', value: member.id }, ...fields],
 		...overrides,
@@ -103,7 +103,7 @@ function getBotLogEmbed(
 
 function updateOnboardingBotLog(
 	member: Discord.GuildMember,
-	updatedEmbed: () => Discord.MessageEmbedOptions,
+	updatedEmbed: () => Discord.APIEmbed,
 ) {
 	let botLogMessage
 	try {

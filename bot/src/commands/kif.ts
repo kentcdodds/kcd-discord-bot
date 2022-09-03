@@ -1,9 +1,9 @@
 // Command purpose:
 // this command is just to make sure the bot is running
-import type * as Discord from 'discord.js'
+import * as Discord from 'discord.js'
 import { matchSorter } from 'match-sorter'
 import * as Sentry from '@sentry/node'
-import { listify, getMember, getErrorMessage, botLog, colors } from '../utils'
+import { listify, getMember, getErrorMessage, botLog } from '../utils'
 import type { AutocompleteFn, CommandFn } from './utils'
 import invariant from 'tiny-invariant'
 
@@ -50,7 +50,7 @@ async function getKifInfo(guild: Discord.Guild, { force = false } = {}) {
 					void botLog(guild, () => {
 						return {
 							title: '❌ Kif failure',
-							color: colors.base08,
+							color: Discord.Colors.DarkRed,
 							description: `Trouble getting kifs from GitHub`,
 							fields: [{ name: 'Error Message', value: errorMessage }],
 						}
@@ -76,7 +76,7 @@ async function getKifInfo(guild: Discord.Guild, { force = false } = {}) {
 					void botLog(guild, () => {
 						return {
 							title: '❌ Kif failure',
-							color: colors.base08,
+							color: Discord.Colors.DarkRed,
 							description: `Two kifs have the same alias!`,
 							url: 'https://github.com/kentcdodds/kifs/edit/main/kifs.json',
 							fields: [
@@ -158,8 +158,8 @@ const handleKifCommand: CommandFn = async interaction => {
 	const { guild } = interaction
 	invariant(guild, 'guild is required')
 
-	const name = interaction.options.getString('name')
-	invariant(name, 'name is required')
+	const name = interaction.options.get('name')?.value
+	invariant(typeof name === 'string', 'name must be a string')
 
 	const toUser = interaction.options.getUser('user')
 	const toMember = toUser ? getMember(guild, toUser.id) : null

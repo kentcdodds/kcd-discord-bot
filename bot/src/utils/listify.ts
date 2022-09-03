@@ -20,7 +20,7 @@ type ListifyOptions<ItemType> = {
 	style?: ListFormatOptions['style']
 	stringify?: (item: ItemType) => string
 }
-function listify<ItemType>(
+function listify<ItemType extends { toString(): string }>(
 	array: Array<ItemType>,
 	{
 		type = 'conjunction',

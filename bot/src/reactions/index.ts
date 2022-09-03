@@ -1,10 +1,10 @@
-import type * as TDiscord from 'discord.js'
+import * as Discord from 'discord.js'
 import reactions from './reactions'
-import { botLog, colors, getMemberLink, getMessageLink } from './utils'
+import { botLog, getMemberLink, getMessageLink } from './utils'
 
 async function handleNewReaction(
-	messageReaction: TDiscord.MessageReaction | TDiscord.PartialMessageReaction,
-	reactingUser: TDiscord.User | TDiscord.PartialUser,
+	messageReaction: Discord.MessageReaction | Discord.PartialMessageReaction,
+	reactingUser: Discord.User | Discord.PartialUser,
 ) {
 	if (messageReaction.partial) {
 		try {
@@ -53,7 +53,7 @@ async function handleNewReaction(
 
 		return {
 			title: 'ℹ️ Someone used a bot reaction',
-			color: colors.base0D,
+			color: Discord.Colors.LuminousVividPink,
 			author: {
 				name: reactingMember?.displayName ?? 'Unknown',
 				iconURL:
@@ -82,7 +82,7 @@ async function handleNewReaction(
 	})
 }
 
-export async function setup(client: TDiscord.Client) {
+export async function setup(client: Discord.Client) {
 	const guildPartials = await client.guilds.fetch()
 	await Promise.all(
 		Array.from(guildPartials.values()).flatMap(async guildPartial => {
@@ -91,7 +91,7 @@ export async function setup(client: TDiscord.Client) {
 			return Promise.all(
 				Array.from(channelPartials.values()).map(async channelPartial => {
 					const channel = await channelPartial.fetch()
-					if (channel.isText()) {
+					if (channel.isTextBased()) {
 						await channel.messages.fetch({ limit: 30 })
 					}
 				}),
@@ -105,7 +105,7 @@ export async function setup(client: TDiscord.Client) {
 	})
 
 	client.on('messageDelete', async msg => {
-		const referencedMessage = msg.channel.messages.cache.find(
+		const referencedMessage = [...msg.channel.messages.cache.values()].find(
 			m => m.reference?.messageId === msg.id && m.author.id === client.user?.id,
 		)
 
