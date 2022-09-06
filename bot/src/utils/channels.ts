@@ -37,3 +37,9 @@ export function getTipsChannel(guild: Discord.Guild) {
 	if (channel?.type !== Discord.ChannelType.GuildText) return null
 	return channel
 }
+
+export function getHowToJoinChannel(guild: Discord.Guild) {
+	const channel = guild.channels.cache.get(process.env.CHANNEL_ID_HOW_TO_JOIN)
+	if (channel?.type !== Discord.ChannelType.GuildText) return null
+	return channel
+}
