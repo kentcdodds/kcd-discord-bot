@@ -82,7 +82,7 @@ async function greetVisitor(member: Discord.GuildMember) {
 		`
 Why hello there ${member}! 👋 You've found the KCD Discord server. It's a pretty sweet place ${catjam}
 
-I'm the KCD Bot 🤖 and I'm here to help you get going. The channel list probably looks a bit small at the moment. This is because you need to first connect your KCD account with your discord account (as explained in ${howToJoin}). Simply go to <https://kentcdodds.com/me> (take a minute to setup an account if you don't have one already) and click the "Connect Discord" button. Once you've done that, you'll be able to see all the channels and you'll be able to introduce yourself in ${introductions}.
+I'm the KCD Bot 🤖 and I'm here to help you get going. The channel list probably looks a bit small at the moment. This is because you need to first connect your KCD account with your discord account (as explained in ${howToJoin}). Simply go to <https://kentcdodds.com/me> (take a minute to setup an account if you don't have one already) and click the "Connect Discord" link. Once you've done that, you'll be able to see all the channels and you'll be able to introduce yourself in ${introductions}.
 
 Once you're finished, I'll ping you again with some more info about the server. I'll be waiting here ${thread} 👋
 
