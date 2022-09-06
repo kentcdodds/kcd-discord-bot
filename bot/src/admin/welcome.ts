@@ -77,18 +77,12 @@ async function greetVisitor(member: Discord.GuildMember) {
 	const catjam =
 		member.guild.emojis.cache.find(({ name }) => name === 'catjam') ?? '😎'
 
-	const thread = await ensureMemberWelcomeThread(member)
+	const thread = await ensureMemberWelcomeThread(member, introductions)
 	await thread.send(
 		`
 Why hello there ${member}! 👋 You've found the KCD Discord server. It's a pretty sweet place ${catjam}
 
-I'm the KCD Bot and I'm here to help you get going. The channel list probably looks a bit small at the moment. This is because you need to first connect your KCD account with your discord account (as explained in ${howToJoin}). Here are the steps:
-
-1. Go to <https://kentcdodds.com/me>
-2. If you don't have an account, create one (it takes 30 seconds)
-3. Click the "Connect to Discord" link
-4. Authorize the connection
-5. You're done!
+I'm the KCD Bot 🤖 and I'm here to help you get going. The channel list probably looks a bit small at the moment. This is because you need to first connect your KCD account with your discord account (as explained in ${howToJoin}). Simply go to <https://kentcdodds.com/me> (take a minute to setup an account if you don't have one already) and click the "Connect Discord" button. Once you've done that, you'll be able to see all the channels and you'll be able to introduce yourself in ${introductions}.
 
 Once you're finished, I'll ping you again with some more info about the server. I'll be waiting here ${thread} 👋
 
@@ -104,10 +98,10 @@ async function welcomeNewMember(member: Discord.GuildMember) {
 	const tips = getTipsChannel(member.guild)
 	if (!tips) return
 
-	const thread = await ensureMemberWelcomeThread(member)
+	const thread = await ensureMemberWelcomeThread(member, introductions)
 	await thread.send(
 		`
-Hello ${member}! Welcome to the KCD Discord server!
+Hooray ${member}! You are now a member of the KCD Discord server!
 
 I'm your friendly robot 🤖. To learn more about me, go ahead and run the command \`/help\` and I'll tell you all about myself.
 
@@ -143,42 +137,42 @@ We'd love to get to know you. Why don't you introduce yourself in ${introduction
 	})
 }
 
-async function ensureMemberWelcomeThread(member: Discord.GuildMember) {
-	const thread = getMemberWelcomeThread(member)
-	if (thread) return thread
-
-	const introductions = getIntroductionsChannel(member.guild)
-	if (!introductions) {
-		throw new Error('Introductions channel not found')
+async function ensureMemberWelcomeThread(
+	member: Discord.GuildMember,
+	introductionsChannel: Discord.TextChannel,
+) {
+	const threadName = `Welcome ${member.user.username} 👋`
+	await introductionsChannel.threads.fetch()
+	const threads = introductionsChannel.threads.cache.filter(
+		t => t.name === threadName,
+	)
+	let thread: Discord.ThreadChannel | undefined
+	for (const [, t] of threads) {
+		await t.members.fetch()
+		if (t.members.cache.has(member.id)) {
+			thread = t
+			break
+		}
 	}
+	if (thread) return thread
 
 	const canMakePrivateThreads = [
 		Discord.GuildPremiumTier.Tier2,
 		Discord.GuildPremiumTier.Tier3,
 	].includes(member.guild.premiumTier)
 
-	const newThread = await introductions.threads.create({
+	const newThread = await introductionsChannel.threads.create({
 		type: canMakePrivateThreads
 			? Discord.ChannelType.GuildPrivateThread
 			: Discord.ChannelType.GuildPublicThread,
 		autoArchiveDuration: Discord.ThreadAutoArchiveDuration.OneHour,
-		name: `Welcome ${member.user.username} 👋`,
+		name: threadName,
 		reason: `${member.user.username} joined the server`,
 	})
 
 	await newThread.members.add(member)
 
 	return newThread
-}
-
-function getMemberWelcomeThread(member: Discord.GuildMember) {
-	const introductions = getIntroductionsChannel(member.guild)
-	if (!introductions) return
-	return introductions.threads.cache.find(
-		thread =>
-			thread.name === `Welcome ${member.user.username} 👋` &&
-			thread.members.cache.has(member.id),
-	)
 }
 
 function getBotLogEmbed(
