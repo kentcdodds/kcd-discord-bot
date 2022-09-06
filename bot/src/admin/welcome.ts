@@ -4,7 +4,6 @@ import {
 	botLog,
 	getBotLogChannel,
 	getErrorMessage,
-	getHowToJoinChannel,
 	getIntroductionsChannel,
 	getMemberLink,
 	getTipsChannel,
@@ -25,11 +24,67 @@ const emoji = {
 }
 
 export function setup(client: Discord.Client) {
+	async function welcomeNewMember(member: Discord.GuildMember) {
+		const introductions = getIntroductionsChannel(member.guild)
+		const tips = getTipsChannel(member.guild)
+		if (!introductions) return
+		if (!tips) return
+
+		const canMakePrivateThreads = [
+			Discord.GuildPremiumTier.Tier2,
+			Discord.GuildPremiumTier.Tier3,
+		].includes(member.guild.premiumTier)
+		const thread = await introductions.threads.create({
+			type: canMakePrivateThreads
+				? Discord.ChannelType.GuildPrivateThread
+				: Discord.ChannelType.GuildPublicThread,
+			autoArchiveDuration: Discord.ThreadAutoArchiveDuration.OneHour,
+			name: `Welcome ${member.user.username} 👋`,
+			reason: `${member.user.username} joined the server`,
+		})
+		await thread.members.add(member)
+		await thread.send(
+			`
+Hello ${member}! Welcome to the KCD Discord server!
+
+I'm your friendly robot 🤖. To learn more about me, go ahead and run the command \`/help\` and I'll tell you all about myself.
+
+I'd suggest you checkout ${tips} to learn more about the server and how to get the most out of it.
+
+We'd love to get to know you. Why don't you introduce yourself in ${introductions}? Here's a template you can use for starters:
+			`.trim() + '\n',
+		)
+		await thread.send(
+			`
+🌐 I'm from: 
+🏢 I work at: 
+💻 I work with this tech: 
+🍎 I snack on: 
+🤪 I really enjoy:
+			`.trim() + ' \n',
+		)
+		await thread.send('We hope you enjoy your time here! 🎉')
+		void updateOnboardingBotLog(member, () => {
+			const memberTeam = getMemberTeam(member)
+			return getBotLogEmbed(member, {
+				color: colors[memberTeam],
+				fields: [
+					{ name: 'Status', value: `onboarded`, inline: true },
+					{
+						name: 'Team',
+						value: `${memberTeam} ${emoji[memberTeam]}`,
+						inline: true,
+					},
+					{ name: 'Welcome channel', value: `${thread}`, inline: true },
+				],
+			})
+		})
+	}
+
 	client.on('guildMemberAdd', async member => {
 		if (isMember(member)) {
 			await welcomeNewMember(member)
 		} else {
-			await greetVisitor(member)
 			void updateOnboardingBotLog(member, () =>
 				getBotLogEmbed(member, {
 					fields: [{ name: 'Status', value: `onboarding`, inline: true }],
@@ -66,119 +121,6 @@ export function setup(client: Discord.Client) {
 			})
 		}
 	})
-}
-
-async function greetVisitor(member: Discord.GuildMember) {
-	const introductions = getIntroductionsChannel(member.guild)
-	if (!introductions) return
-
-	const howToJoin = getHowToJoinChannel(member.guild)
-
-	const catjam =
-		member.guild.emojis.cache.find(({ name }) => name === 'catjam') ?? '😎'
-
-	const thread = await ensureMemberWelcomeThread(member)
-	await thread.send(
-		`
-Why hello there ${member}! 👋 You've found the KCD Discord server. It's a pretty sweet place ${catjam}
-
-I'm the KCD Bot and I'm here to help you get going. The channel list probably looks a bit small at the moment. This is because you need to first connect your KCD account with your discord account (as explained in ${howToJoin}). Here are the steps:
-
-1. Go to <https://kentcdodds.com/me>
-2. If you don't have an account, create one (it takes 30 seconds)
-3. Click the "Connect to Discord" link
-4. Authorize the connection
-5. You're done!
-
-Once you're finished, I'll ping you again with some more info about the server. I'll be waiting here ${thread} 👋
-
-P.S. If you can't do that at the moment, that's fine. Just come back later and I'll be here.
-	`.trim(),
-	)
-}
-
-async function welcomeNewMember(member: Discord.GuildMember) {
-	const introductions = getIntroductionsChannel(member.guild)
-	if (!introductions) return
-
-	const tips = getTipsChannel(member.guild)
-	if (!tips) return
-
-	const thread = await ensureMemberWelcomeThread(member)
-	await thread.send(
-		`
-Hello ${member}! Welcome to the KCD Discord server!
-
-I'm your friendly robot 🤖. To learn more about me, go ahead and run the command \`/help\` and I'll tell you all about myself.
-
-I'd suggest you checkout ${tips} to learn more about the server and how to get the most out of it.
-
-We'd love to get to know you. Why don't you introduce yourself in ${introductions}? Here's a template you can use for starters:
-		`.trim() + '\n',
-	)
-	await thread.send(
-		`
-🌐 I'm from: 
-🏢 I work at: 
-💻 I work with this tech: 
-🍎 I snack on: 
-🤪 I really enjoy:
-		`.trim() + ' \n',
-	)
-	await thread.send('We hope you enjoy your time here! 🎉')
-	void updateOnboardingBotLog(member, () => {
-		const memberTeam = getMemberTeam(member)
-		return getBotLogEmbed(member, {
-			color: colors[memberTeam],
-			fields: [
-				{ name: 'Status', value: `onboarded`, inline: true },
-				{
-					name: 'Team',
-					value: `${memberTeam} ${emoji[memberTeam]}`,
-					inline: true,
-				},
-				{ name: 'Welcome channel', value: `${thread}`, inline: true },
-			],
-		})
-	})
-}
-
-async function ensureMemberWelcomeThread(member: Discord.GuildMember) {
-	const thread = getMemberWelcomeThread(member)
-	if (thread) return thread
-
-	const introductions = getIntroductionsChannel(member.guild)
-	if (!introductions) {
-		throw new Error('Introductions channel not found')
-	}
-
-	const canMakePrivateThreads = [
-		Discord.GuildPremiumTier.Tier2,
-		Discord.GuildPremiumTier.Tier3,
-	].includes(member.guild.premiumTier)
-
-	const newThread = await introductions.threads.create({
-		type: canMakePrivateThreads
-			? Discord.ChannelType.GuildPrivateThread
-			: Discord.ChannelType.GuildPublicThread,
-		autoArchiveDuration: Discord.ThreadAutoArchiveDuration.OneHour,
-		name: `Welcome ${member.user.username} 👋`,
-		reason: `${member.user.username} joined the server`,
-	})
-
-	await newThread.members.add(member)
-
-	return newThread
-}
-
-function getMemberWelcomeThread(member: Discord.GuildMember) {
-	const introductions = getIntroductionsChannel(member.guild)
-	if (!introductions) return
-	return introductions.threads.cache.find(
-		thread =>
-			thread.name === `Welcome ${member.user.username} 👋` &&
-			thread.members.cache.has(member.id),
-	)
 }
 
 function getBotLogEmbed(
