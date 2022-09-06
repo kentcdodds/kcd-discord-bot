@@ -193,7 +193,7 @@ function getBotLogEmbed(
 			url: getMemberLink(member),
 			...author,
 		},
-		color: Discord.Colors.DarkOrange,
+		color: Discord.Colors.White,
 		description: `${member} has joined the server.`,
 		fields: [{ name: 'Member ID', value: member.id, inline: true }, ...fields],
 		...overrides,
