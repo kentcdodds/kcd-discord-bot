@@ -42,22 +42,12 @@ This will update your server with all the emoji reactions the bot has.
 Next, run:
 
 ```
-cp ./bot/src/playground.example.ts ./bot/src/playground.ts
+cp ./app/bot/playground.example.ts ./app/bot/playground.ts
 ```
 
 That has things setup for you to play around to make the bot do whatever you'd
 like. Once you're ready to commit to something then stick it in the appropriate
-file in the `bot/src` directory.
-
-If you'd like, you can make your `playground.ts` file (which is gitignored) have
-this for its contents:
-
-```js
-import '.'
-```
-
-And now it'll just do what the actual bot code does. However you want to develop
-is fine.
+file in the `./app/bot` directory.
 
 To run the playground file, run:
 
@@ -69,4 +59,6 @@ This will start the playground file in watch mode. Any change you make will
 trigger it to be re-run which should make development pretty quick despite no
 automated tests.
 
-If you'd like to run the bot and the Remix app together, run `npm run dev`.
+If you'd like to just run the whole app then run `npm run dev`. Unfortunately I
+haven't figured out how to get the bot to restart on changes when doing this
+though (yet).

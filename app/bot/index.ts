@@ -7,12 +7,17 @@ import {
 	botLog,
 	getBuildTimeInfo,
 	getCommitInfo,
+	fetchKCDGuild,
 	getStartTimeInfo,
 	typedBoolean,
 } from './utils'
 
+export const ref: {
+	client?: Discord.Client
+} = {}
+
 export async function start() {
-	const client = new Discord.Client({
+	const client = (ref.client = new Discord.Client({
 		intents: [
 			Discord.GatewayIntentBits.Guilds,
 			Discord.GatewayIntentBits.MessageContent,
@@ -21,19 +26,18 @@ export async function start() {
 			Discord.GatewayIntentBits.GuildMessageReactions,
 			Discord.GatewayIntentBits.GuildEmojisAndStickers,
 		],
-	})
+	}))
 
-	client.on('ready', () => {
+	client.on('ready', async () => {
 		Sentry.captureMessage('Client logged in.')
 		// setup all parts of the bot here
 		commands.setup(client)
 		reactions.setup(client)
 		admin.setup(client)
-		void primeTheCache(client)
 
-		const guild = client.guilds.cache.find(
-			({ id }) => id === process.env.KCD_GUILD_ID,
-		)
+		await primeTheCache(client)
+
+		const guild = await fetchKCDGuild(client)
 		if (guild && process.env.NODE_ENV === 'production') {
 			void botLog(guild, () => {
 				const commitInfo = getCommitInfo()

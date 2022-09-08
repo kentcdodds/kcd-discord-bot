@@ -43,3 +43,19 @@ export function getHowToJoinChannel(guild: Discord.Guild) {
 	if (channel?.type !== Discord.ChannelType.GuildText) return null
 	return channel
 }
+
+export function getLivestreamChatChannel(guild: Discord.Guild) {
+	const channel = guild.channels.cache.get(
+		process.env.CHANNEL_ID_LIVESTREAM_CHAT,
+	)
+	if (channel?.type !== Discord.ChannelType.GuildText) return null
+	return channel
+}
+
+export async function fetchLivestreamChatChannel(guild: Discord.Guild) {
+	const channel = await guild.channels.fetch(
+		process.env.CHANNEL_ID_LIVESTREAM_CHAT,
+	)
+	if (channel?.type !== Discord.ChannelType.GuildText) return null
+	return channel
+}

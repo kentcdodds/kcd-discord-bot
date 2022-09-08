@@ -2,6 +2,10 @@ import * as Discord from 'discord.js'
 import { HTTPError } from 'discord.js'
 import { getBotLogChannel, getTalkToBotsChannel } from './channels'
 
+export async function fetchKCDGuild(client: Discord.Client) {
+	return client.guilds.fetch(process.env.KCD_GUILD_ID)
+}
+
 export const getMessageLink = (msg: Discord.Message | Discord.PartialMessage) =>
 	`https://discordapp.com/channels/${msg.guild?.id ?? '@me'}/${
 		msg.channel.id
