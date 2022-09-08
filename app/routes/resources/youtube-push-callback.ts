@@ -9,7 +9,6 @@ import { handleUpdatedVideo } from '~/bot/admin/livestream-chat'
 // the loader is for when YouTube wants to verify our webhook
 export async function loader({ request }: LoaderArgs) {
 	const url = new URL(request.url)
-	console.log(url)
 	const challenge = url.searchParams.get('hub.challenge')
 	return new Response(challenge)
 }
@@ -17,7 +16,6 @@ export async function loader({ request }: LoaderArgs) {
 // the action actually receives the data from YouTube
 export async function action({ request }: ActionArgs) {
 	const feedText = await request.text()
-	console.log(feedText)
 	const feed = htmlparser2.parseFeed(feedText)
 	const id = feed?.items?.[0]?.id?.slice('yt:video:'.length)
 
