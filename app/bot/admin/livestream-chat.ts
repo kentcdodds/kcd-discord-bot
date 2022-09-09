@@ -1,6 +1,7 @@
 // When a new YouTube live stream starts, create a new thread in the livestream chat channel
 // and send a message with a link to the live stream.
 
+import type * as Discord from 'discord.js'
 import { fetchLivestreamChatChannel } from '../utils'
 import { lookupYouTubeVideo } from '~/utils/youtube.server'
 import { ref } from '../'
@@ -20,6 +21,9 @@ export async function handleUpdatedVideo(id: string) {
 		return
 	}
 
+	const youtubeUrl = `https://youtu.be/${id}`
+
+	let thread: Discord.ThreadChannel | undefined
 	if (!video.title.includes('Office Hours')) {
 		const { client } = ref
 		if (!client) {
@@ -57,9 +61,9 @@ export async function handleUpdatedVideo(id: string) {
 		)
 
 		const message = await livestreamChat.send(
-			`New livestream scheduled: https://youtu.be/${id}`,
+			`New livestream scheduled: ${youtubeUrl}`,
 		)
-		const thread = await message.startThread({
+		thread = await message.startThread({
 			name: `${formattedStartTimeForTitle} - ${video.title}`,
 		})
 		await thread.send(
@@ -67,9 +71,16 @@ export async function handleUpdatedVideo(id: string) {
 		)
 	}
 
-	void sendTweet(
-		video.actualStartTime
-			? `I'm live streaming now: https://youtu.be/${id}`
-			: `I've scheduled a live stream: https://youtu.be/${id}`,
-	)
+	let tweet: string
+	if (thread) {
+		tweet = video.actualStartTime
+			? `I'm live on YouTube! Come join the discussion on discord: ${thread.url}\n\n${youtubeUrl}`
+			: `Upcoming live stream! Join the discussion on discord: ${thread.url}\n\n${youtubeUrl}`
+	} else {
+		tweet = video.actualStartTime
+			? `I'm live on YouTube! ${youtubeUrl}`
+			: `Upcoming live stream! ${youtubeUrl}`
+	}
+
+	void sendTweet(tweet)
 }
