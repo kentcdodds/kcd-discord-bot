@@ -1,6 +1,10 @@
 type YouTubeVideoItemData = {
 	snippet: { title: string; channelId: string }
-	liveStreamingDetails?: { scheduledStartTime?: string; actualEndTime?: string }
+	liveStreamingDetails?: {
+		scheduledStartTime?: string
+		actualEndTime?: string
+		actualStartTime?: string
+	}
 	status: { privacyStatus: 'private' | 'public' | 'unlisted' }
 }
 type YouTubeVideoData = {
@@ -59,8 +63,19 @@ export async function lookupYouTubeVideo(id: string) {
 	const [video] = json.items
 	const {
 		snippet: { title, channelId },
-		liveStreamingDetails: { scheduledStartTime, actualEndTime } = {},
+		liveStreamingDetails: {
+			scheduledStartTime,
+			actualEndTime,
+			actualStartTime,
+		} = {},
 		status: { privacyStatus },
 	} = video
-	return { title, channelId, privacyStatus, scheduledStartTime, actualEndTime }
+	return {
+		title,
+		channelId,
+		privacyStatus,
+		scheduledStartTime,
+		actualEndTime,
+		actualStartTime,
+	}
 }

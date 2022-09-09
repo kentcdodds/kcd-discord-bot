@@ -26,6 +26,11 @@ declare global {
 
 			YOUTUBE_API_KEY: string
 			YOUTUBE_KCD_CHANNEL_ID: string
+
+			TWITTER_CONSUMER_KEY: string
+			TWITTER_CONSUMER_KEY_SECRET: string
+			TWITTER_ACCESS_TOKEN: string
+			TWITTER_ACCESS_SECRET: string
 		}
 	}
 }
@@ -55,6 +60,11 @@ export function init() {
 
 		'YOUTUBE_API_KEY',
 		'YOUTUBE_KCD_CHANNEL_ID',
+
+		'TWITTER_CONSUMER_KEY',
+		'TWITTER_CONSUMER_KEY_SECRET',
+		'TWITTER_ACCESS_TOKEN',
+		'TWITTER_ACCESS_SECRET',
 	] as const
 	for (const env of requiredEnvs) {
 		invariant(process.env[env], `${env} is required`)
