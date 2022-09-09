@@ -14,7 +14,8 @@ export async function handleUpdatedVideo(id: string) {
 		!video.scheduledStartTime ||
 		video.actualEndTime ||
 		video.privacyStatus !== 'public' ||
-		video.channelId !== process.env.YOUTUBE_KCD_CHANNEL_ID
+		video.channelId !== process.env.YOUTUBE_KCD_CHANNEL_ID ||
+		video.title.includes('Office Hours') // we've already got a channel for this
 	) {
 		return
 	}
