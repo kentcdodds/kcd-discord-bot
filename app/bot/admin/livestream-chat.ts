@@ -7,6 +7,7 @@ import { lookupYouTubeVideo } from '~/utils/youtube.server'
 import { ref } from '../'
 import { fetchKCDGuild } from '../utils'
 import * as dt from 'date-fns'
+import * as dtt from 'date-fns-tz'
 import { sendTweet } from '~/utils/twitter.server'
 
 export async function handleUpdatedVideo(id: string) {
@@ -50,7 +51,11 @@ export async function handleUpdatedVideo(id: string) {
 			return
 		}
 
-		const parsedStartTime = dt.parseISO(video.scheduledStartTime)
+		const parsedStartTimeUTC = dt.parseISO(video.scheduledStartTime)
+		const parsedStartTime = dtt.zonedTimeToUtc(
+			parsedStartTimeUTC,
+			'America/Denver',
+		)
 		const formattedStartTimeForTitle = dt.format(
 			parsedStartTime,
 			'yyyy-MM-dd haaa',
