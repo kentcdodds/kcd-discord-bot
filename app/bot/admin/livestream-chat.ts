@@ -1,7 +1,6 @@
 // When a new YouTube live stream starts, create a new thread in the livestream chat channel
 // and send a message with a link to the live stream.
 
-import type * as Discord from 'discord.js'
 import { fetchLivestreamChatChannel } from '../utils'
 import { lookupYouTubeVideo } from '~/utils/youtube.server'
 import { ref } from '../'
