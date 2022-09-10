@@ -23,7 +23,9 @@ async function dedupeMessages(message: TDiscord.Message) {
 	if (isLink(message.content)) return // ignore links, gifs/blog posts/etc.
 
 	const channels = Array.from(
-		guild.channels.cache.filter(ch => ch.isTextBased()).values(),
+		guild.channels.cache
+			.filter(ch => ch.isTextBased() && !ch.name.startsWith('Welcome'))
+			.values(),
 	) as Array<TDiscord.TextBasedChannel>
 
 	function msgFilter(msg: TDiscord.Message) {
