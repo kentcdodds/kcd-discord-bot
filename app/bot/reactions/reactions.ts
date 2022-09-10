@@ -21,6 +21,8 @@ const reactions: Record<string, ReactionFn> = {
 	botdontasktoask: dontAskToAsk,
 	botofficehours: officeHours,
 	botcall: callKent,
+	bottjssupport: tjssupport,
+	boterdsupport: erdsupport,
 } as const
 
 async function help(messageReaction: Discord.MessageReaction) {
@@ -216,5 +218,27 @@ async function thread(messageReaction: Discord.MessageReaction) {
 	}
 }
 thread.description = `Creates a thread for the message. Handy if you know the message needs a thread, but you can't commit to participating in the conversation so you don't want to be the one to create it.`
+
+async function tjssupport(messageReaction: Discord.MessageReaction) {
+	void messageReaction.remove()
+	const { channel, author, guild } = messageReaction.message
+	if (!guild || !channel || !author) return
+
+	await channel.send(
+		`Hi ${author} 👋\nFor support with TestingJavaScript.com, please email help@testingjavascript.com. Thanks!`,
+	)
+}
+tjssupport.description = `Replies to the message telling the user to email TestingJavaScript.com support.`
+
+async function erdsupport(messageReaction: Discord.MessageReaction) {
+	void messageReaction.remove()
+	const { channel, author, guild } = messageReaction.message
+	if (!guild || !channel || !author) return
+
+	await channel.send(
+		`Hi ${author} 👋\nFor support with EpicReact.dev, please email team@epicreact.dev. Thanks!`,
+	)
+}
+erdsupport.description = `Replies to the message telling the user to email EpicReact.dev support.`
 
 export default reactions
