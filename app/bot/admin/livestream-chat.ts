@@ -11,81 +11,101 @@ import * as dtt from 'date-fns-tz'
 import { sendTweet } from '~/utils/twitter.server'
 
 export async function handleUpdatedVideo(id: string) {
-	const video = await lookupYouTubeVideo(id)
+	const {
+		title,
+		scheduledStartTime,
+		actualStartTime,
+		actualEndTime,
+		privacyStatus,
+		channelId,
+	} = (await lookupYouTubeVideo(id)) ?? {}
 	if (
-		!video ||
-		!video.scheduledStartTime ||
-		video.actualEndTime ||
-		video.privacyStatus !== 'public' ||
-		video.channelId !== process.env.YOUTUBE_KCD_CHANNEL_ID
+		!scheduledStartTime ||
+		actualEndTime ||
+		privacyStatus !== 'public' ||
+		channelId !== process.env.YOUTUBE_KCD_CHANNEL_ID
 	) {
 		return
 	}
 
 	const youtubeUrl = `https://youtu.be/${id}`
 
-	let thread: Discord.ThreadChannel | undefined
-	if (!video.title.includes('Office Hours')) {
-		const { client } = ref
-		if (!client) {
-			console.error('no client', ref)
-			return
-		}
-
-		const guild = await fetchKCDGuild(client)
-		if (!guild) {
-			console.error('KCD Guild not found')
-			return
-		}
-
-		const livestreamChat = await fetchLivestreamChatChannel(guild)
-		if (!livestreamChat) {
-			console.error('no livestream chat channel found')
-			return
-		}
-
-		await livestreamChat.messages.fetch()
-		if (
-			livestreamChat.messages.cache.some(({ content }) => content.includes(id))
-		) {
-			return
-		}
-
-		const parsedStartTimeUTC = dt.parseISO(video.scheduledStartTime)
-		const parsedStartTime = dtt.zonedTimeToUtc(
-			parsedStartTimeUTC,
-			'America/Denver',
-		)
-		const formattedStartTimeForTitle = dt.format(
-			parsedStartTime,
-			'yyyy-MM-dd haaa',
-		)
-		const formattedStartTimeForMessage = dt.format(
-			parsedStartTime,
-			'yyyy-MM-dd h:mmaaa',
-		)
-
-		const message = await livestreamChat.send(
-			`New livestream scheduled: ${youtubeUrl}`,
-		)
-		thread = await message.startThread({
-			name: `${formattedStartTimeForTitle} - ${video.title}`,
-		})
-		await thread.send(
-			`A new livestream has been scheduled for ${formattedStartTimeForMessage}. Chat about it here!`,
-		)
-	}
+	const thread = title.includes('Office Hours')
+		? null
+		: await createDiscordThread({ id, scheduledStartTime, title, youtubeUrl })
 
 	let tweet: string
 	if (thread) {
-		tweet = video.actualStartTime
+		tweet = actualStartTime
 			? `I'm live on YouTube! Come join the discussion on discord: ${thread.url}\n\n${youtubeUrl}`
 			: `Upcoming live stream! Join the discussion on discord: ${thread.url}\n\n${youtubeUrl}`
 	} else {
-		tweet = video.actualStartTime
+		tweet = actualStartTime
 			? `I'm live on YouTube! ${youtubeUrl}`
 			: `Upcoming live stream! ${youtubeUrl}`
 	}
 
 	void sendTweet(tweet)
+}
+
+async function createDiscordThread({
+	id,
+	title,
+	scheduledStartTime,
+	youtubeUrl,
+}: {
+	id: string
+	title: string
+	scheduledStartTime: string
+	youtubeUrl: string
+}) {
+	const { client } = ref
+	if (!client) {
+		console.error('no client', ref)
+		return
+	}
+
+	const guild = await fetchKCDGuild(client)
+	if (!guild) {
+		console.error('KCD Guild not found')
+		return
+	}
+
+	const livestreamChat = await fetchLivestreamChatChannel(guild)
+	if (!livestreamChat) {
+		console.error('no livestream chat channel found')
+		return
+	}
+
+	await livestreamChat.messages.fetch()
+	if (
+		livestreamChat.messages.cache.some(({ content }) => content.includes(id))
+	) {
+		return
+	}
+
+	const parsedStartTimeUTC = dt.parseISO(scheduledStartTime)
+	const parsedStartTime = dtt.zonedTimeToUtc(
+		parsedStartTimeUTC,
+		'America/Denver',
+	)
+	const formattedStartTimeForTitle = dt.format(
+		parsedStartTime,
+		'yyyy-MM-dd haaa',
+	)
+	const formattedStartTimeForMessage = dt.format(
+		parsedStartTime,
+		'yyyy-MM-dd h:mmaaa',
+	)
+
+	const message = await livestreamChat.send(
+		`New livestream scheduled: ${youtubeUrl}`,
+	)
+	const thread = await message.startThread({
+		name: `${formattedStartTimeForTitle} - ${title}`,
+	})
+	await thread.send(
+		`A new livestream has been scheduled for ${formattedStartTimeForMessage}. Chat about it here!`,
+	)
+	return thread
 }
