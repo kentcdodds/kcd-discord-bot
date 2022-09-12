@@ -1,7 +1,7 @@
 // When a new YouTube live stream starts, create a new thread in the livestream chat channel
 // and send a message with a link to the live stream.
 
-import { fetchLivestreamChatChannel } from '../utils'
+import { fetchLivestreamChatChannel, getKcdOfficeHoursChannel } from '../utils'
 import { lookupYouTubeVideo } from '~/utils/youtube.server'
 import { ref } from '../'
 import { fetchKCDGuild } from '../utils'
@@ -29,15 +29,15 @@ export async function handleUpdatedVideo(id: string) {
 
 	const youtubeUrl = `https://youtu.be/${id}`
 
-	const thread = title.includes('Office Hours')
-		? null
+	const channel = title.includes('Office Hours')
+		? await getOfficeHoursChannel()
 		: await createDiscordThread({ id, scheduledStartTime, title, youtubeUrl })
 
 	let tweet: string
-	if (thread) {
+	if (channel) {
 		tweet = actualStartTime
-			? `I'm live on YouTube! Come join the discussion on discord: ${thread.url}\n\n${youtubeUrl}`
-			: `Upcoming live stream! Join the discussion on discord: ${thread.url}\n\n${youtubeUrl}`
+			? `I'm live on YouTube! Come join the discussion on discord: ${channel.url}\n\n${youtubeUrl}`
+			: `Upcoming live stream! Join the discussion on discord: ${channel.url}\n\n${youtubeUrl}`
 	} else {
 		tweet = actualStartTime
 			? `I'm live on YouTube! ${youtubeUrl}`
@@ -45,6 +45,21 @@ export async function handleUpdatedVideo(id: string) {
 	}
 
 	void sendTweet(tweet)
+}
+
+async function getOfficeHoursChannel() {
+	const { client } = ref
+	if (!client) {
+		console.error('no client', ref)
+		return
+	}
+
+	const guild = await fetchKCDGuild(client)
+	if (!guild) {
+		console.error('KCD Guild not found')
+		return
+	}
+	return getKcdOfficeHoursChannel(guild)
 }
 
 async function createDiscordThread({
@@ -77,10 +92,13 @@ async function createDiscordThread({
 	}
 
 	await livestreamChat.messages.fetch()
-	if (
-		livestreamChat.messages.cache.some(({ content }) => content.includes(id))
-	) {
-		return
+	await livestreamChat.threads.fetch()
+
+	const existingMessage = livestreamChat.messages.cache.find(({ content }) =>
+		content.includes(id),
+	)
+	if (existingMessage) {
+		return existingMessage.thread
 	}
 
 	const parsedStartTimeUTC = dt.parseISO(scheduledStartTime)
