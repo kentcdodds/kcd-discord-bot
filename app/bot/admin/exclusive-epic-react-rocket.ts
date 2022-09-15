@@ -7,15 +7,15 @@ export function setup(client: TDiscord.Client) {
 		const oldHasEpicReactRole = isEpicReactDev(oldMember)
 		const newHasEpicReactRole = isEpicReactDev(member)
 		const isNewEpicReactDev = newHasEpicReactRole && !oldHasEpicReactRole
+		const hasRocket = member.nickname?.includes('🚀')
 
-		if (isNewEpicReactDev) {
+		if (isNewEpicReactDev && !hasRocket) {
 			await member.setNickname(`${member.displayName} 🚀`)
 			return
 		}
 
 		if (newHasEpicReactRole) return
 
-		const hasRocket = member.nickname?.includes('🚀')
 		if (!hasRocket) return
 
 		await member.setNickname(member.displayName.replace(/🚀/g, '').trim())

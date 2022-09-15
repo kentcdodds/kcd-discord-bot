@@ -7,15 +7,15 @@ export function setup(client: TDiscord.Client) {
 		const oldHasTJSRole = isTestingJs(oldMember)
 		const newHasTJSRole = isTestingJs(member)
 		const isNewTJS = newHasTJSRole && !oldHasTJSRole
+		const hasTrophy = member.nickname?.includes('🏆')
 
-		if (isNewTJS) {
+		if (isNewTJS && !hasTrophy) {
 			await member.setNickname(`${member.displayName} 🏆`)
 			return
 		}
 
 		if (newHasTJSRole) return
 
-		const hasTrophy = member.nickname?.includes('🏆')
 		if (!hasTrophy) return
 
 		await member.setNickname(member.displayName.replace(/🏆/g, '').trim())

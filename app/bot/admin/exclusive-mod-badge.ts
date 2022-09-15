@@ -8,8 +8,9 @@ export function setup(client: TDiscord.Client) {
 		const newHasModRole = isModerator(member)
 		const isNewMod = newHasModRole && !oldHasModRole
 		const isDemotedMod = oldHasModRole && !newHasModRole
+		const hasBadge = member.nickname?.includes('◆')
 
-		if (isNewMod) {
+		if (isNewMod && !hasBadge) {
 			await member.setNickname(`${member.displayName} ◆`)
 			return
 		}
@@ -23,7 +24,6 @@ export function setup(client: TDiscord.Client) {
 			return
 		}
 
-		const hasBadge = member.nickname?.includes('◆')
 		if (!hasBadge) return
 		if (isModerator(member)) return
 
