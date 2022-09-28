@@ -1,6 +1,8 @@
 // guided by this video: https://www.youtube.com/watch?v=QQSJGS2JR4w
 // "docs" https://developers.google.com/youtube/v3/guides/push_notifications
 // subscribe: https://pubsubhubbub.appspot.com/subscribe
+// status: https://pubsubhubbub.appspot.com/subscription-details?hub.callback=https%3A%2F%2Fkcd-discord-bot-v2.fly.dev%2Fresources%2Fyoutube-push-callback&hub.topic=https%3A%2F%2Fwww.youtube.com%2Fxml%2Ffeeds%2Fvideos.xml%3Fchannel_id%3DUCz-BYvuntVRt_VpfR6FKXJw&hub.secret=
+// keeps this subscribed: https://github.com/kentcdodds/youtube-websub-resub
 import type { ActionArgs, LoaderArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import * as htmlparser2 from 'htmlparser2'

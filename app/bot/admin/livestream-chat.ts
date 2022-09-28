@@ -36,8 +36,8 @@ export async function handleUpdatedVideo(id: string) {
 	let tweet: string
 	if (channel) {
 		tweet = actualStartTime
-			? `I'm live on YouTube! Come join the discussion on discord: ${channel.url}\n\n${youtubeUrl}`
-			: `Upcoming live stream! Join the discussion on discord: ${channel.url}\n\n${youtubeUrl}`
+			? `I'm live on YouTube! Come join the discussion on https://kcd.im/discord: ${channel.url}\n\n${youtubeUrl}`
+			: `Upcoming live stream! Join the discussion on https://kcd.im/discord: ${channel.url}\n\n${youtubeUrl}`
 	} else {
 		tweet = actualStartTime
 			? `I'm live on YouTube! ${youtubeUrl}`
