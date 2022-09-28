@@ -10,7 +10,7 @@
 		"dev": "run-p dev:*",
 		"dev:css": "npm run generate:css -- --watch",
 		"dev:remix": "cross-env NODE_ENV=development remix dev",
-		"play:bot": "nodemon ./app/bot/playground.ts",
+		"play:bot": "nodemon -e ts,tsx --exec \"ts-node --require tsconfig-paths/register --require ./mocks ./app/bot/playground.ts\"",
 		"format": "prettier --write .",
 		"generate:css": "tailwindcss -o ./app/styles/tailwind.css",
 		"lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",

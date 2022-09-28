@@ -8,6 +8,10 @@ import { fetchKCDGuild } from '../utils'
 import * as dt from 'date-fns'
 import * as dtt from 'date-fns-tz'
 import { sendTweet } from '~/utils/twitter.server'
+import {
+	GuildScheduledEventEntityType,
+	GuildScheduledEventPrivacyLevel,
+} from 'discord.js'
 
 export async function handleUpdatedVideo(id: string) {
 	const {
@@ -44,7 +48,15 @@ export async function handleUpdatedVideo(id: string) {
 			: `Upcoming live stream! ${youtubeUrl}`
 	}
 
-	void sendTweet(tweet)
+	await Promise.all([
+		sendTweet(tweet),
+		createDiscordScheduledEvent({
+			id,
+			scheduledStartTime,
+			title,
+			youtubeUrl,
+		}),
+	])
 }
 
 async function getGuild() {
@@ -66,6 +78,45 @@ async function getOfficeHoursChannel() {
 	const guild = await getGuild()
 	if (!guild) return
 	return getKcdOfficeHoursChannel(guild)
+}
+
+async function createDiscordScheduledEvent({
+	id,
+	title,
+	scheduledStartTime,
+	youtubeUrl,
+}: {
+	id: string
+	title: string
+	scheduledStartTime: string
+	youtubeUrl: string
+}) {
+	const guild = await getGuild()
+	if (!guild) return
+	await guild.scheduledEvents.fetch()
+	const existingEvent = guild.scheduledEvents.cache.find(({ description }) =>
+		Boolean(description?.includes(id)),
+	)
+	if (existingEvent) return
+	let startDate = dt.parseISO(scheduledStartTime)
+	if (startDate.getTime() < Date.now()) {
+		// needs to be in the future, so we'll just put it a bit in the future
+		startDate = dt.addSeconds(new Date(), 3)
+	}
+	// create new event for live stream
+	await guild.scheduledEvents.create({
+		name: title,
+		scheduledStartTime: startDate,
+		// we don't really know how long the stream will be so we'll
+		// just set it to a few hours
+		scheduledEndTime: dt.addHours(startDate, 2),
+		entityType: GuildScheduledEventEntityType.External,
+		entityMetadata: {
+			location: youtubeUrl,
+		},
+		description: `Kent is live streaming on YouTube! ${youtubeUrl}`,
+		privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
+	})
 }
 
 async function createDiscordThread({
