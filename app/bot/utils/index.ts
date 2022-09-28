@@ -39,7 +39,7 @@ export function botLog(
 	const botsChannel = getBotLogChannel(guild)
 	if (!botsChannel) return
 
-	let message: Discord.MessageOptions
+	let message: Discord.BaseMessageOptions
 	try {
 		const result = messageFn()
 		if (!result) return
@@ -60,7 +60,7 @@ export function botLog(
 	return Promise.resolve()
 		.then(() => botsChannel.send(message))
 		.catch((error: unknown) => {
-			let messageSummary = message.content
+			let messageSummary: string | null | undefined = message.content
 			if (!messageSummary && message.embeds?.[0] instanceof Discord.Embed) {
 				messageSummary =
 					message.embeds[0].title ?? message.embeds[0].description
