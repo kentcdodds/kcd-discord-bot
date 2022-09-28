@@ -47,7 +47,7 @@ export async function handleUpdatedVideo(id: string) {
 	void sendTweet(tweet)
 }
 
-async function getOfficeHoursChannel() {
+async function getGuild() {
 	const { client } = ref
 	if (!client) {
 		console.error('no client', ref)
@@ -59,6 +59,12 @@ async function getOfficeHoursChannel() {
 		console.error('KCD Guild not found')
 		return
 	}
+	return guild
+}
+
+async function getOfficeHoursChannel() {
+	const guild = await getGuild()
+	if (!guild) return
 	return getKcdOfficeHoursChannel(guild)
 }
 
@@ -73,17 +79,8 @@ async function createDiscordThread({
 	scheduledStartTime: string
 	youtubeUrl: string
 }) {
-	const { client } = ref
-	if (!client) {
-		console.error('no client', ref)
-		return
-	}
-
-	const guild = await fetchKCDGuild(client)
-	if (!guild) {
-		console.error('KCD Guild not found')
-		return
-	}
+	const guild = await getGuild()
+	if (!guild) return
 
 	const livestreamChat = await fetchLivestreamChatChannel(guild)
 	if (!livestreamChat) {
@@ -102,7 +99,7 @@ async function createDiscordThread({
 	}
 
 	const parsedStartTimeUTC = dt.parseISO(scheduledStartTime)
-	const parsedStartTime = dtt.zonedTimeToUtc(
+	const parsedStartTime = dtt.utcToZonedTime(
 		parsedStartTimeUTC,
 		'America/Denver',
 	)

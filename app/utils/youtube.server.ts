@@ -1,3 +1,4 @@
+// https://developers.google.com/youtube/v3/docs/videos#resource
 type YouTubeVideoItemData = {
 	snippet: { title: string; channelId: string }
 	liveStreamingDetails?: {

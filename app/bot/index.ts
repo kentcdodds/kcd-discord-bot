@@ -25,6 +25,7 @@ export async function start() {
 			Discord.GatewayIntentBits.GuildMessages,
 			Discord.GatewayIntentBits.GuildMessageReactions,
 			Discord.GatewayIntentBits.GuildEmojisAndStickers,
+			Discord.GatewayIntentBits.GuildScheduledEvents,
 		],
 	}))
 
