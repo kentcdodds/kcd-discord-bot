@@ -175,7 +175,7 @@ report.description = 'Reports a message to the server moderators to look at.'
 
 async function ask(messageReaction: Discord.MessageReaction) {
 	void messageReaction.remove()
-	const reply = `Hi ${messageReaction.message.author} 👋\nWe appreciate your question and we'll do our best to help you when we can. Could you please give us more details? Please follow the guidelines in <https://rmx.as/ask> (especially the part about making a <https://rmx.as/repro>) and then we'll try to answer your question.`
+	const reply = `Hi ${messageReaction.message.author} 👋\nWe appreciate your question and we'll do our best to help you when we can. Could you please give us more details? Please follow the guidelines in <https://kcd.im/ask> (especially the part about making a <https://kcd.im/repro>) and then we'll try to answer your question.`
 	const { channel, author, guild, id } = messageReaction.message
 	if (!guild || !channel || !author) return
 
