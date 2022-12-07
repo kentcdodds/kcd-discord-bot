@@ -224,8 +224,8 @@ async function tjssupport(messageReaction: Discord.MessageReaction) {
 	const { channel, author, guild } = messageReaction.message
 	if (!guild || !channel || !author) return
 
-	await channel.send(
-		`Hi ${author} 👋\nFor support with TestingJavaScript.com, please email help@testingjavascript.com. Thanks!`,
+	await messageReaction.message.reply(
+		`For support with TestingJavaScript.com, please email help@testingjavascript.com. Thanks!`,
 	)
 }
 tjssupport.description = `Replies to the message telling the user to email TestingJavaScript.com support.`
@@ -235,8 +235,8 @@ async function erdsupport(messageReaction: Discord.MessageReaction) {
 	const { channel, author, guild } = messageReaction.message
 	if (!guild || !channel || !author) return
 
-	await channel.send(
-		`Hi ${author} 👋\nFor support with EpicReact.dev, please email team@epicreact.dev. Thanks!`,
+	await messageReaction.message.reply(
+		`For support with EpicReact.dev, please email team@epicreact.dev. Thanks!`,
 	)
 }
 erdsupport.description = `Replies to the message telling the user to email EpicReact.dev support.`
