@@ -23,9 +23,9 @@ export function setup(client: TDiscord.Client) {
 		const botsChannel = getTalkToBotsChannel(member.guild)
 		await botsChannel?.send(
 			`
-Hi ${member.user}, I noticed you added a rocket 🚀 to your nickname. I'm afraid you can't do this because your discord account is not connected to your EpicReact.Dev account. Go to <https://epicreact.dev/discord> to make that connection.
+Hi ${member.user}, I noticed you added a rocket 🚀 to your nickname. I'm afraid you can't do this because your discord account is not connected to your EpicReact.dev account. Go to <https://epicreact.dev/discord> to make that connection.
 
-If you don't have an https://EpicReact.Dev account, you should check it out. It's pretty great 😉 🚀
+If you don't have an https://EpicReact.dev account, you should check it out. It's pretty great 😉 🚀
 			`.trim(),
 		)
 	})

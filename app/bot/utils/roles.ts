@@ -6,6 +6,10 @@ export function hasRole(member: Member, roleId: string): boolean {
 	return member.roles.cache.has(roleId)
 }
 
+export function isEpicWebDev(member: Member) {
+	return hasRole(member, process.env.ROLE_ID_EPIC_WEB)
+}
+
 export function isEpicReactDev(member: Member) {
 	return hasRole(member, process.env.ROLE_ID_EPIC_REACT)
 }

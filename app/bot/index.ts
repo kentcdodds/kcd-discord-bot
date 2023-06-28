@@ -30,7 +30,6 @@ export async function start() {
 	}))
 
 	client.on('ready', async () => {
-		Sentry.captureMessage('Client logged in.')
 		// setup all parts of the bot here
 		commands.setup(client)
 		reactions.setup(client)
@@ -64,7 +63,6 @@ export async function start() {
 		}
 	})
 
-	Sentry.captureMessage('Logging in client')
 	void client.login(process.env.DISCORD_BOT_TOKEN)
 
 	return async function cleanup() {

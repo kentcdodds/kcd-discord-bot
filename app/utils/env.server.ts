@@ -17,6 +17,7 @@ declare global {
 			CHANNEL_ID_LIVESTREAM_CHAT: string
 
 			ROLE_ID_TESTING_JS: string
+			ROLE_ID_EPIC_WEB: string
 			ROLE_ID_EPIC_REACT: string
 			ROLE_ID_MODERATORS: string
 			ROLE_ID_MEMBER: string
@@ -50,8 +51,9 @@ export function init() {
 		'CHANNEL_ID_HOW_TO_JOIN',
 		'CHANNEL_ID_LIVESTREAM_CHAT',
 
-		'ROLE_ID_TESTING_JS',
+		'ROLE_ID_EPIC_WEB',
 		'ROLE_ID_EPIC_REACT',
+		'ROLE_ID_TESTING_JS',
 		'ROLE_ID_MODERATORS',
 		'ROLE_ID_MEMBER',
 		'ROLE_ID_RED',
