@@ -32,7 +32,7 @@ async function dedupeMessages(message: TDiscord.Message) {
 		return (
 			msg.id !== message.id && // not the EXACT same message
 			msg.author.id !== msg.client.user?.id && // not from the bot
-			msg.author.bot && // not a bot
+			!msg.author.bot && // not a bot
 			msg.author.id === message.author.id && // from the same user
 			new Date().getTime() - msg.createdAt.getTime() < sixHours && // within the last six hours
 			msg.content.length > 50 && // longer than 50 characters
