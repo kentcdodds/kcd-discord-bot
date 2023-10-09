@@ -27,6 +27,14 @@ export async function action({ request }: DataFunctionArgs) {
 			{ status: 400 },
 		)
 	}
+	console.log({
+		client_id: process.env.DISCORD_APP_ID,
+		client_secret: process.env.DISCORD_CLIENT_SECRET,
+		code: discordCode,
+		grant_type: 'authorization_code',
+		redirect_uri: `http://localhost:${port}`,
+		scope: 'identify',
+	})
 	const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
 		method: 'POST',
 		body: new URLSearchParams({
@@ -41,12 +49,29 @@ export async function action({ request }: DataFunctionArgs) {
 			'Content-Type': 'application/x-www-form-urlencoded',
 		},
 	})
+	if (!tokenResponse.ok) {
+		console.error(await tokenResponse.text())
+		return json(
+			{ status: 'error', error: 'Error validating discord code' } as const,
+			{ status: 400 },
+		)
+	}
 	const oauthData = await tokenResponse.json()
 	const userResponse = await fetch('https://discord.com/api/users/@me', {
 		headers: {
 			authorization: `${oauthData.token_type} ${oauthData.access_token}`,
 		},
 	})
+	if (!userResponse.ok) {
+		console.error(await userResponse.text())
+		return json(
+			{
+				status: 'error',
+				error: 'Error retrieving user information with access token',
+			} as const,
+			{ status: 400 },
+		)
+	}
 
 	const userData = await userResponse.json()
 	console.log({ userData, oauthData })
