@@ -1,4 +1,4 @@
-import invariant from 'tiny-invariant'
+import { invariant } from '~/utils'
 import { getMember, listify } from '../utils/index'
 import type { AutocompleteFn, CommandFn } from './utils'
 

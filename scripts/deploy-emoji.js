@@ -2,7 +2,6 @@ const path = require('path')
 const fs = require('fs').promises
 const { REST } = require('@discordjs/rest')
 const { Routes } = require('discord-api-types/v9')
-const invariant = require('tiny-invariant')
 const dotenv = require('dotenv')
 
 dotenv.config({ path: path.join(__dirname, '../.env') })
@@ -45,3 +44,9 @@ async function go() {
 }
 
 go()
+
+function invariant(condition, message) {
+	if (!condition) {
+		throw new Error(typeof message === 'function' ? message() : message)
+	}
+}

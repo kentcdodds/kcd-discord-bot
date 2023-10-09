@@ -5,7 +5,7 @@ import { matchSorter } from 'match-sorter'
 import * as Sentry from '@sentry/node'
 import { listify, getMember, getErrorMessage, botLog } from '../utils'
 import type { AutocompleteFn, CommandFn } from './utils'
-import invariant from 'tiny-invariant'
+import { invariant } from '~/utils'
 
 type KifData = {
 	aliases?: Array<string>
@@ -35,6 +35,7 @@ async function getKifInfo(guild: Discord.Guild, { force = false } = {}) {
 	)
 		.json()
 		.then(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(data: any) => {
 				const kifsData = data as KifsRawData
 				return JSON.parse(

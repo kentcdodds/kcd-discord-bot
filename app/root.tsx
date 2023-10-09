@@ -1,5 +1,4 @@
-import type { LinksFunction, LoaderArgs, MetaFunction } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import type { LinksFunction, V2_MetaFunction } from '@remix-run/node'
 import {
 	Links,
 	LiveReload,
@@ -10,22 +9,17 @@ import {
 } from '@remix-run/react'
 
 import tailwindStylesheetUrl from './styles/tailwind.css'
-import { getUser } from './session.server'
 
 export const links: LinksFunction = () => {
 	return [{ rel: 'stylesheet', href: tailwindStylesheetUrl }]
 }
 
-export const meta: MetaFunction = () => ({
-	charset: 'utf-8',
-	title: 'Remix Notes',
-	viewport: 'width=device-width,initial-scale=1',
-})
-
-export async function loader({ request }: LoaderArgs) {
-	return json({
-		user: await getUser(request),
-	})
+export const meta: V2_MetaFunction = () => {
+	return [
+		{ name: 'charset', content: 'utf-8' },
+		{ title: 'KCD Bot App' },
+		{ name: 'viewport', content: 'width=device-width,initial-scale=1' },
+	]
 }
 
 export default function App() {

@@ -1,11 +1,13 @@
-import invariant from 'tiny-invariant'
+import { invariant } from '../utils'
 
 declare global {
+	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface ProcessEnv {
 			DISCORD_BOT_TOKEN: string
 			KCD_GUILD_ID: string
 			DISCORD_APP_ID: string
+			DISCORD_CLIENT_SECRET: string
 
 			CHANNEL_ID_BOT_LOGS: string
 			CHANNEL_ID_TALK_TO_BOTS: string
@@ -41,6 +43,7 @@ export function init() {
 		'DISCORD_BOT_TOKEN',
 		'KCD_GUILD_ID',
 		'DISCORD_APP_ID',
+		'DISCORD_CLIENT_SECRET',
 
 		'CHANNEL_ID_BOT_LOGS',
 		'CHANNEL_ID_TALK_TO_BOTS',

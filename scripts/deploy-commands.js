@@ -2,7 +2,6 @@ const path = require('path')
 const { SlashCommandBuilder } = require('@discordjs/builders')
 const { REST } = require('@discordjs/rest')
 const { Routes } = require('discord-api-types/v9')
-const invariant = require('tiny-invariant')
 const dotenv = require('dotenv')
 
 dotenv.config({ path: path.join(__dirname, '../.env') })
@@ -62,3 +61,9 @@ rest
 	})
 	.then(() => console.log('Successfully registered application commands.'))
 	.catch(console.error)
+
+function invariant(condition, message) {
+	if (!condition) {
+		throw new Error(typeof message === 'function' ? message() : message)
+	}
+}

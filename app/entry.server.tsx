@@ -2,7 +2,7 @@ import { PassThrough } from 'stream'
 import { renderToPipeableStream } from 'react-dom/server'
 import { RemixServer } from '@remix-run/react'
 import { Response } from '@remix-run/node'
-import type { EntryContext, Headers } from '@remix-run/node'
+import type { EntryContext } from '@remix-run/node'
 import isbot from 'isbot'
 import * as env from './utils/env.server'
 import * as sentry from './utils/sentry.server'
@@ -31,7 +31,7 @@ export default function handleRequest(
 			<RemixServer context={remixContext} url={request.url} />,
 			{
 				[callbackName]() {
-					let body = new PassThrough()
+					const body = new PassThrough()
 
 					responseHeaders.set('Content-Type', 'text/html')
 

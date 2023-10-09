@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node'
-import invariant from 'tiny-invariant'
+import { invariant } from '~/utils'
 
 export async function init() {
 	if (process.env.NODE_ENV === 'production') {

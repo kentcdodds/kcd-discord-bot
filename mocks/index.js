@@ -1,9 +1,9 @@
-const { rest } = require('msw')
+const { http, HttpResponse } = require('msw')
 const { setupServer } = require('msw/node')
 
 const server = setupServer(
-	rest.post('https://api.twitter.com/2/tweets', (req, res, ctx) => {
-		return res(ctx.json({}))
+	http.post('https://api.twitter.com/2/tweets', () => {
+		return HttpResponse.json({})
 	}),
 )
 

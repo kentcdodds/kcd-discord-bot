@@ -1,10 +1,13 @@
 // When a new YouTube live stream starts, create a new thread in the livestream chat channel
 // and send a message with a link to the live stream.
 
-import { fetchLivestreamChatChannel, getKcdOfficeHoursChannel } from '../utils'
 import { lookupYouTubeVideo } from '~/utils/youtube.server'
 import { ref } from '../'
-import { fetchKCDGuild } from '../utils'
+import {
+	fetchKCDGuild,
+	fetchLivestreamChatChannel,
+	getKcdOfficeHoursChannel,
+} from '../utils'
 import * as dt from 'date-fns'
 import * as dtt from 'date-fns-tz'
 import { sendTweet } from '~/utils/twitter.server'
