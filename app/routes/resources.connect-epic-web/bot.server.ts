@@ -8,7 +8,6 @@ export async function addEpicWebRoleToUser(userId: string) {
 	await guild.members.fetch(userId)
 	const member = guild.members.cache.get(userId)
 	if (!member) return { status: 'error', error: 'Member not found' } as const
-	console.log(userId, member, member.roles, epicWebRoleId)
 	await member.roles.add(epicWebRoleId)
 	await member.setNickname(`${member.displayName} 🌌`)
 	return { status: 'success', member } as const
