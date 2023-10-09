@@ -49,14 +49,16 @@ export async function action({ request }: DataFunctionArgs) {
 	})
 
 	const userData = await userResponse.json()
+	console.log({ userData, oauthData })
 	const addRoleResult = await addEpicWebRoleToUser(userData.id)
 	if (addRoleResult.status === 'success') {
+		const { member } = addRoleResult
 		return json({
 			status: 'success',
 			member: {
-				avatarURL: addRoleResult.member.avatarURL,
-				displayName: addRoleResult.member.displayName,
-				id: addRoleResult.member.id,
+				avatarURL: member.avatarURL,
+				displayName: member.displayName,
+				id: member.id,
 			},
 		} as const)
 	} else {
