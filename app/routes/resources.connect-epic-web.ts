@@ -6,7 +6,7 @@ import { fetchKCDGuild } from '~/bot/utils'
 const RequestSchema = z.object({
 	deviceToken: z.string(),
 	discordCode: z.string(),
-	port: z.number().default(5639),
+	port: z.string().default('5639'),
 })
 
 export async function action({ request }: DataFunctionArgs) {
