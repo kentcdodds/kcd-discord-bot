@@ -67,10 +67,14 @@ export async function action({ request }: DataFunctionArgs) {
 export async function addEpicWebRoleToUser(userId: string) {
 	const guild = await getGuild()
 	if (!guild) return { status: 'error', error: 'KCD Guild not found' } as const
-	const epicWebRoleId = process.env.ROLE_ID_EPIC_WEB
 	await guild.members.fetch(userId)
 	const member = guild.members.cache.get(userId)
-	if (!member) return { status: 'error', error: 'Member not found' } as const
+	if (!member)
+		return {
+			status: 'error',
+			error: `Member with ID ${userId} not found`,
+		} as const
+	const epicWebRoleId = process.env.ROLE_ID_EPIC_WEB
 	await member.roles.add(epicWebRoleId)
 	await member.setNickname(`${member.displayName} 🌌`)
 	return { status: 'success', member } as const
