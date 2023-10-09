@@ -5,9 +5,6 @@ node_modules
 /public/build-info.json
 .env
 
-/prisma/data.db
-/prisma/data.db-journal
-
 /app/styles/tailwind.css
 
 /app/bot/playground.ts
