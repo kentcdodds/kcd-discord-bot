@@ -93,8 +93,16 @@ export async function addEpicWebRoleToUser(userId: string) {
 			error: `Member with ID ${userId} not found`,
 		} as const
 	const epicWebRoleId = process.env.ROLE_ID_EPIC_WEB
-	await member.roles.add(epicWebRoleId)
-	await member.setNickname(`${member.displayName} 🌌`)
+
+	// handle missing permissions gracefully
+	await member.roles.add(epicWebRoleId).catch((e: any) => {
+		if (e?.message?.includes('Missing Permissions')) return
+		throw e
+	})
+	await member.setNickname(`${member.displayName} 🌌`).catch((e: any) => {
+		if (e?.message?.includes('Missing Permissions')) return
+		throw e
+	})
 	return { status: 'success', member } as const
 }
 
