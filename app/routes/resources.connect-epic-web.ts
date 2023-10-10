@@ -1,12 +1,13 @@
 import { json, type DataFunctionArgs } from '@remix-run/node'
 import { z } from 'zod'
 import { ref } from '~/bot'
-import { fetchKCDGuild } from '~/bot/utils'
+import { fetchKCDGuild, getErrorMessage } from '~/bot/utils'
 
 const RequestSchema = z.object({
 	deviceToken: z.string(),
 	discordCode: z.string(),
 	port: z.string().default('5639'),
+	scope: z.string(),
 })
 
 const UserInfoSchema = z.object({
@@ -24,6 +25,9 @@ const UserInfoSchema = z.object({
 const epicWebProductIds = ['kcd_product-f000186d-78c2-4b02-a763-85b2e5feec7b']
 
 export async function action({ request }: DataFunctionArgs) {
+	const guild = await getGuild()
+	if (!guild) return { status: 'error', error: 'KCD Guild not found' } as const
+
 	const rawJson = await request.json()
 	const result = RequestSchema.safeParse(rawJson)
 	if (!result.success) {
@@ -31,7 +35,7 @@ export async function action({ request }: DataFunctionArgs) {
 			status: 400,
 		})
 	}
-	const { deviceToken, discordCode, port } = result.data
+	const { deviceToken, discordCode, port, scope } = result.data
 	const userInfoResponse = await fetch(
 		'https://www.epicweb.dev/oauth/userinfo',
 		{ headers: { authorization: `Bearer ${deviceToken}` } },
@@ -66,20 +70,23 @@ export async function action({ request }: DataFunctionArgs) {
 			{ status: 400 },
 		)
 	}
-	const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
-		method: 'POST',
-		body: new URLSearchParams({
-			client_id: process.env.DISCORD_APP_ID,
-			client_secret: process.env.DISCORD_CLIENT_SECRET,
-			code: discordCode,
-			grant_type: 'authorization_code',
-			redirect_uri: `http://localhost:${port}/discord/callback`,
-			scope: 'identify',
-		}).toString(),
-		headers: {
-			'Content-Type': 'application/x-www-form-urlencoded',
+	const tokenResponse = await fetch(
+		'https://discord.com/api/v10/oauth2/token',
+		{
+			method: 'POST',
+			body: new URLSearchParams({
+				client_id: process.env.DISCORD_APP_ID,
+				client_secret: process.env.DISCORD_CLIENT_SECRET,
+				code: discordCode,
+				grant_type: 'authorization_code',
+				redirect_uri: `http://localhost:${port}/discord/callback`,
+				scope,
+			}).toString(),
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
 		},
-	})
+	)
 	if (!tokenResponse.ok) {
 		console.error(await tokenResponse.text())
 		return json(
@@ -88,7 +95,7 @@ export async function action({ request }: DataFunctionArgs) {
 		)
 	}
 	const oauthData = await tokenResponse.json()
-	const userResponse = await fetch('https://discord.com/api/users/@me', {
+	const userResponse = await fetch('https://discord.com/api/v10/users/@me', {
 		headers: {
 			authorization: `${oauthData.token_type} ${oauthData.access_token}`,
 		},
@@ -105,44 +112,47 @@ export async function action({ request }: DataFunctionArgs) {
 	}
 
 	const userData = await userResponse.json()
-	const addRoleResult = await addEpicWebRoleToUser(userData.id)
-	if (addRoleResult.status === 'success') {
-		const { member } = addRoleResult
-		return json({
-			status: 'success',
-			member: {
-				avatarURL: member.avatarURL,
-				displayName: member.displayName,
-				id: member.id,
-			},
-		} as const)
-	} else {
-		return json(addRoleResult, { status: 500 })
-	}
-}
 
-export async function addEpicWebRoleToUser(userId: string) {
-	const guild = await getGuild()
-	if (!guild) return { status: 'error', error: 'KCD Guild not found' } as const
-	await guild.members.fetch(userId)
-	const member = guild.members.cache.get(userId)
-	if (!member)
+	await guild.members
+		.add(userData.id, { accessToken: oauthData.access_token })
+		.catch((e: any) => {
+			console.error(`error adding user to guild, but maybe it's fine?`, e)
+		})
+
+	await guild.members.fetch(userData.id)
+	const member = guild.members.cache.get(userData.id)
+	if (!member) {
 		return {
 			status: 'error',
-			error: `Member with ID ${userId} not found`,
+			error: `Member with ID ${userData.id} not found`,
 		} as const
+	}
 	const epicWebRoleId = process.env.ROLE_ID_EPIC_WEB
 
 	// handle missing permissions gracefully
-	await member.roles.add(epicWebRoleId).catch((e: any) => {
-		if (e?.message?.includes('Missing Permissions')) return
-		throw e
-	})
-	await member.setNickname(`${member.displayName} 🌌`).catch((e: any) => {
-		if (e?.message?.includes('Missing Permissions')) return
-		throw e
-	})
-	return { status: 'success', member } as const
+	try {
+		await member.roles.add(epicWebRoleId).catch((e: any) => {
+			if (e?.message?.includes('Missing Permissions')) return
+			throw e
+		})
+		await member.setNickname(`${member.displayName} 🌌`).catch((e: any) => {
+			if (e?.message?.includes('Missing Permissions')) return
+			throw e
+		})
+	} catch (error) {
+		return json({ status: 'error', error: getErrorMessage(error) } as const, {
+			status: 500,
+		})
+	}
+	return json({
+		status: 'success',
+		member: {
+			avatarURL: member.avatarURL,
+			displayName: member.displayName,
+			id: member.id,
+		},
+		oauthData,
+	} as const)
 }
 
 async function getGuild() {
