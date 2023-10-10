@@ -27,14 +27,6 @@ export async function action({ request }: DataFunctionArgs) {
 			{ status: 400 },
 		)
 	}
-	console.log({
-		client_id: process.env.DISCORD_APP_ID,
-		client_secret: process.env.DISCORD_CLIENT_SECRET,
-		code: discordCode,
-		grant_type: 'authorization_code',
-		redirect_uri: `http://localhost:${port}`,
-		scope: 'identify',
-	})
 	const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
 		method: 'POST',
 		body: new URLSearchParams({
@@ -42,7 +34,7 @@ export async function action({ request }: DataFunctionArgs) {
 			client_secret: process.env.DISCORD_CLIENT_SECRET,
 			code: discordCode,
 			grant_type: 'authorization_code',
-			redirect_uri: `http://localhost:${port}`,
+			redirect_uri: `http://localhost:${port}/discord/callback`,
 			scope: 'identify',
 		}).toString(),
 		headers: {
@@ -74,7 +66,6 @@ export async function action({ request }: DataFunctionArgs) {
 	}
 
 	const userData = await userResponse.json()
-	console.log({ userData, oauthData })
 	const addRoleResult = await addEpicWebRoleToUser(userData.id)
 	if (addRoleResult.status === 'success') {
 		const { member } = addRoleResult
