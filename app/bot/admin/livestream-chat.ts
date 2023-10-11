@@ -66,13 +66,13 @@ async function getGuild() {
 	const { client } = ref
 	if (!client) {
 		console.error('no client', ref)
-		return
+		return null
 	}
 
 	const guild = await fetchKCDGuild(client)
 	if (!guild) {
 		console.error('KCD Guild not found')
-		return
+		return null
 	}
 	return guild
 }

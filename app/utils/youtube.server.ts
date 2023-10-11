@@ -56,7 +56,7 @@ export async function lookupYouTubeVideo(id: string) {
 	url.searchParams.set('id', id)
 	url.searchParams.set('key', process.env.YOUTUBE_API_KEY)
 	const response = await fetch(url)
-	const json = await response.json()
+	const json = (await response.json()) as any
 	if (!validateYouTubeResponse(json)) {
 		console.error(json, json.items[0])
 		throw new Error('Invalid YouTube response')

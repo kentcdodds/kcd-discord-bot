@@ -24,7 +24,7 @@ const segmentEmoji: Record<Result['segment'], string> = {
 function isResults(maybeResults: unknown): maybeResults is Array<Result> {
 	if (!Array.isArray(maybeResults)) return false
 	return maybeResults.every(
-		result =>
+		(result: any) =>
 			typeof result === 'object' ||
 			typeof result.url === 'string' ||
 			typeof result.segment === 'string' ||
@@ -48,7 +48,7 @@ async function searchAPI(
 			error: `Could not search for "${query}": ${response.statusText}`,
 		}
 	}
-	const results = await response.json()
+	const results = (await response.json()) as any
 	if (typeof results.error === 'string') {
 		return { type: 'error', error: results.error }
 	}

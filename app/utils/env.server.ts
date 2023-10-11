@@ -17,6 +17,7 @@ declare global {
 			CHANNEL_ID_TIPS: string
 			CHANNEL_ID_HOW_TO_JOIN: string
 			CHANNEL_ID_LIVESTREAM_CHAT: string
+			CHANNEL_ID_EPIC_WEB_FORUM: string
 
 			ROLE_ID_TESTING_JS: string
 			ROLE_ID_EPIC_WEB: string
@@ -53,6 +54,7 @@ export function init() {
 		'CHANNEL_ID_TIPS',
 		'CHANNEL_ID_HOW_TO_JOIN',
 		'CHANNEL_ID_LIVESTREAM_CHAT',
+		'CHANNEL_ID_EPIC_WEB_FORUM',
 
 		'ROLE_ID_EPIC_WEB',
 		'ROLE_ID_EPIC_REACT',
