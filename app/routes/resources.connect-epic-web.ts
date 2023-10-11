@@ -91,10 +91,6 @@ export async function action({ request }: DataFunctionArgs) {
 			if (e?.message?.includes('Missing Permissions')) return
 			throw e
 		})
-		await member.setNickname(`${member.displayName} 🌌`).catch((e: any) => {
-			if (e?.message?.includes('Missing Permissions')) return
-			throw e
-		})
 	} catch (error) {
 		return json({ status: 'error', error: getErrorMessage(error) } as const, {
 			status: 500,
