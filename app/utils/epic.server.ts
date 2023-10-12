@@ -13,7 +13,10 @@ const UserInfoSchema = z.object({
 	),
 })
 
-const epicWebProductIds = ['kcd_product-f000186d-78c2-4b02-a763-85b2e5feec7b']
+const epicWebProductIds = [
+	'kcd_product-f000186d-78c2-4b02-a763-85b2e5feec7b',
+	'kcd_product_dbf94bf0-66b0-11ee-8c99-0242ac120002',
+]
 
 export async function validateUserPurchase({
 	deviceToken,
