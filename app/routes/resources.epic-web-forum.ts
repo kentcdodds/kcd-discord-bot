@@ -225,6 +225,7 @@ async function getAvatarUrl(id: string) {
 			},
 		)
 		const data = (await res.json()) as any
+		if (!data.user.avatar) return null
 		return `https://cdn.discordapp.com/avatars/${id}/${data.user.avatar}?size=128`
 	} catch {
 		return null
