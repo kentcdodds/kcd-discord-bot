@@ -147,8 +147,8 @@ async function getThreadData({
 					console.error('no message found for thread', thread)
 					continue
 				}
-				const { content, attachments, embeds, reactions, author } =
-					starterMessage
+				const { content, attachments, embeds, reactions } = starterMessage
+				const author = await starterMessage.author.fetch()
 				const previewImageUrl =
 					attachments.first()?.url ?? embeds?.[0]?.image?.url ?? null
 				const authorDisplayName =

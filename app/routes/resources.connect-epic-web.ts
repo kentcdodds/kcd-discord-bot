@@ -99,7 +99,7 @@ export async function action({ request }: DataFunctionArgs) {
 	return json({
 		status: 'success',
 		member: {
-			avatarURL: member.avatarURL,
+			avatarURL: member.avatarURL(),
 			displayName: member.displayName,
 			id: member.id,
 		},
