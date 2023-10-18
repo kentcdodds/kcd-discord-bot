@@ -184,8 +184,8 @@ async function getThreadData({
 						? member.user.hexAccentColor
 						: author.hexAccentColor,
 					authorAvatarUrl: member?.user
-						? member.user.avatarURL()
-						: author.avatarURL(),
+						? member.user.avatarURL({ size: 128 })
+						: author.avatarURL({ size: 128 }),
 					messagePreview,
 					messageCount: thread.messageCount ?? messages.cache.size,
 					lastUpdated: messages.cache.last()?.createdAt.toISOString() ?? '',
