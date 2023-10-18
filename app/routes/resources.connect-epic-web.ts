@@ -96,10 +96,12 @@ export async function action({ request }: DataFunctionArgs) {
 			status: 500,
 		})
 	}
+	const avatarURL =
+		member.avatarURL({ size: 512 }) ?? (await getAvatarUrl(member.id))
 	return json({
 		status: 'success',
 		member: {
-			avatarURL: member.avatarURL({ size: 512 }),
+			avatarURL,
 			displayName: member.displayName,
 			id: member.id,
 		},
@@ -120,4 +122,21 @@ async function getGuild() {
 		return null
 	}
 	return guild
+}
+
+async function getAvatarUrl(id: string) {
+	try {
+		const res = await fetch(
+			`https://discord.com/api/v10/guilds/${process.env.KCD_GUILD_ID}/members/${id}`,
+			{
+				headers: {
+					Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+				},
+			},
+		)
+		const data = (await res.json()) as any
+		return `https://cdn.discordapp.com/avatars/${id}/${data.user.avatar}?size=512`
+	} catch {
+		return null
+	}
 }

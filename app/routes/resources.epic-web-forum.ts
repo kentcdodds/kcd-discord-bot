@@ -183,9 +183,10 @@ async function getThreadData({
 					authorHexAccentColor: member?.user
 						? member.user.hexAccentColor
 						: author.hexAccentColor,
-					authorAvatarUrl: member?.user
-						? member.user.avatarURL({ size: 128 })
-						: author.avatarURL({ size: 128 }),
+					authorAvatarUrl:
+						member?.user.avatarURL({ size: 128 }) ??
+						author.avatarURL({ size: 128 }) ??
+						(await getAvatarUrl(author.id)),
 					messagePreview,
 					messageCount: thread.messageCount ?? messages.cache.size,
 					lastUpdated: messages.cache.last()?.createdAt.toISOString() ?? '',
@@ -211,4 +212,21 @@ async function getGuild() {
 		return null
 	}
 	return guild
+}
+
+async function getAvatarUrl(id: string) {
+	try {
+		const res = await fetch(
+			`https://discord.com/api/v10/guilds/${process.env.KCD_GUILD_ID}/members/${id}`,
+			{
+				headers: {
+					Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+				},
+			},
+		)
+		const data = (await res.json()) as any
+		return `https://cdn.discordapp.com/avatars/${id}/${data.user.avatar}?size=128`
+	} catch {
+		return null
+	}
 }
