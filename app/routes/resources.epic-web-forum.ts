@@ -147,12 +147,16 @@ async function getThreadData({
 					console.error('no message found for thread', thread)
 					continue
 				}
-				const { content, attachments, embeds, reactions } = starterMessage
-				const author = await starterMessage.author.fetch()
+				const { content, attachments, embeds, reactions, author } =
+					starterMessage
+				const member = await guild.members.fetch(author.id)
 				const previewImageUrl =
 					attachments.first()?.url ?? embeds?.[0]?.image?.url ?? null
 				const authorDisplayName =
-					author.displayName ?? author.username ?? 'Unknown User'
+					member?.displayName ??
+					author.displayName ??
+					author.username ??
+					'Unknown User'
 
 				const messagePreview =
 					content.length > 100 ? `${content.slice(0, 100)}...` : content
@@ -176,8 +180,12 @@ async function getThreadData({
 					name,
 					link: thread.url,
 					authorDisplayName,
-					authorHexAccentColor: author.hexAccentColor,
-					authorAvatarUrl: author.avatarURL(),
+					authorHexAccentColor: member?.user
+						? member.user.hexAccentColor
+						: author.hexAccentColor,
+					authorAvatarUrl: member?.user
+						? member.user.avatarURL()
+						: author.avatarURL(),
 					messagePreview,
 					messageCount: thread.messageCount ?? messages.cache.size,
 					lastUpdated: messages.cache.last()?.createdAt.toISOString() ?? '',
