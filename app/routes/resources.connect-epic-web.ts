@@ -75,8 +75,8 @@ export async function action({ request }: DataFunctionArgs) {
 			console.error(`error adding user to guild, but maybe it's fine?`, e)
 		})
 
-	await guild.members.fetch(userData.id)
-	const member = guild.members.cache.get(userData.id)
+	const member = await guild.members.fetch(userData.id)
+
 	if (!member) {
 		return {
 			status: 'error',
