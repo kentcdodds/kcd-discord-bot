@@ -142,7 +142,9 @@ async function getThreadData({
 					})
 					.filter(Boolean)
 
-				const starterMessage = await thread.fetchStarterMessage()
+				const starterMessage = await thread
+					.fetchStarterMessage()
+					.catch(() => null)
 				if (!starterMessage) {
 					console.error('no message found for thread', thread)
 					continue
