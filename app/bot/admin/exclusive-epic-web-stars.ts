@@ -23,7 +23,7 @@ export function setup(client: TDiscord.Client) {
 		const botsChannel = getTalkToBotsChannel(member.guild)
 		await botsChannel?.send(
 			`
-Hi ${member.user}, I noticed you added the milky way 🌌 to your nickname. I'm afraid you can't do this because your discord account is not connected to your EpicWeb.dev account. Go to <https://www.epicweb.dev/discord> to make that connection.
+Hi ${member.user}, I noticed you added the milky way 🌌 to your nickname. I'm afraid you can't do this because your discord account is not connected to your EpicWeb.dev account. Run the workshop app locally and go to <http://localhost:5639/discord> to make that connection. Learn more at <http://www.epicweb.dev/get-started>.
 
 If you don't have an https://EpicWeb.dev account, you should check it out. It's pretty great 😉 🌌
 			`.trim(),
