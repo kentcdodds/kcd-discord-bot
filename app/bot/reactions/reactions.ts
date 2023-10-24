@@ -23,6 +23,7 @@ const reactions: Record<string, ReactionFn> = {
 	botcall: callKent,
 	bottjssupport: tjssupport,
 	boterdsupport: erdsupport,
+	botewdsupport: ewdsupport,
 } as const
 
 async function help(messageReaction: Discord.MessageReaction) {
@@ -240,5 +241,16 @@ async function erdsupport(messageReaction: Discord.MessageReaction) {
 	)
 }
 erdsupport.description = `Replies to the message telling the user to email EpicReact.dev support.`
+
+async function ewdsupport(messageReaction: Discord.MessageReaction) {
+	void messageReaction.remove()
+	const { channel, author, guild } = messageReaction.message
+	if (!guild || !channel || !author) return
+
+	await messageReaction.message.reply(
+		`For support with EpicWeb.dev, please email team@epicweb.dev. Thanks!`,
+	)
+}
+ewdsupport.description = `Replies to the message telling the user to email EpicWeb.dev support.`
 
 export default reactions
