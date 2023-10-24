@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 const { writeFile } = require('fs').promises
-const { $ } = require('execa')
 
 async function go() {
+	const { $ } = await import('execa')
 	console.log('setting up swapfile...')
 	await $`fallocate -l 512M /swapfile`
 	await $`chmod 0600 /swapfile`
