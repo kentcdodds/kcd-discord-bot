@@ -151,7 +151,7 @@ async function getThreadData({
 				}
 				const { content, attachments, embeds, reactions, author } =
 					starterMessage
-				const member = await guild.members.fetch(author.id)
+				const member = await guild.members.fetch(author.id).catch(() => null)
 				const previewImageUrl =
 					attachments.first()?.url ?? embeds?.[0]?.image?.url ?? null
 				const authorDisplayName =
