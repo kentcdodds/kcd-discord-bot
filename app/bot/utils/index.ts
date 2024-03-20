@@ -2,7 +2,7 @@ import * as Discord from 'discord.js'
 import { HTTPError } from 'discord.js'
 import { getBotLogChannel, getTalkToBotsChannel } from './channels'
 
-export async function fetchKCDGuild(client: Discord.Client) {
+export async function fetchEpicWebGuild(client: Discord.Client) {
 	return client.guilds.fetch(process.env.KCD_GUILD_ID)
 }
 

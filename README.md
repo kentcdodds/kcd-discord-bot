@@ -1,9 +1,9 @@
-# KCD Discord Bot
+# Epic Web Discord Bot
 
-This is the KCD Discord Bot. It's hosted on fly. It runs alongside an actual
-Remix app (Indie Stack) which we may use to have some kind of UI for controlling
-the bot and stuff. Who knows. It was just nice to do this so we'll have a
-persistence layer if we decide we need that.
+This is the Epic Web Discord Bot. It's hosted on fly. It runs alongside an
+actual Remix app (Indie Stack) which we may use to have some kind of UI for
+controlling the bot and stuff. Who knows. It was just nice to do this so we'll
+have a persistence layer if we decide we need that.
 
 ## Development
 

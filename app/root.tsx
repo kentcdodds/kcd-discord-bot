@@ -17,7 +17,7 @@ export const links: LinksFunction = () => {
 export const meta: V2_MetaFunction = () => {
 	return [
 		{ name: 'charset', content: 'utf-8' },
-		{ title: 'KCD Bot App' },
+		{ title: 'Epic Web Discord Bot App' },
 		{ name: 'viewport', content: 'width=device-width,initial-scale=1' },
 	]
 }

@@ -7,7 +7,7 @@ import {
 	botLog,
 	getBuildTimeInfo,
 	getCommitInfo,
-	fetchKCDGuild,
+	fetchEpicWebGuild,
 	getStartTimeInfo,
 	typedBoolean,
 } from './utils'
@@ -37,7 +37,7 @@ export async function start() {
 
 		await primeTheCache(client)
 
-		const guild = await fetchKCDGuild(client)
+		const guild = await fetchEpicWebGuild(client)
 		if (guild && process.env.NODE_ENV === 'production') {
 			void botLog(guild, () => {
 				const commitInfo = getCommitInfo()

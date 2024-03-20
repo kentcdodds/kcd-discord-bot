@@ -4,7 +4,7 @@
 import { lookupYouTubeVideo } from '~/utils/youtube.server'
 import { ref } from '../'
 import {
-	fetchKCDGuild,
+	fetchEpicWebGuild,
 	fetchLivestreamChatChannel,
 	getKcdOfficeHoursChannel,
 } from '../utils'
@@ -69,9 +69,9 @@ async function getGuild() {
 		return null
 	}
 
-	const guild = await fetchKCDGuild(client)
+	const guild = await fetchEpicWebGuild(client)
 	if (!guild) {
-		console.error('KCD Guild not found')
+		console.error('Epic Web Guild not found')
 		return null
 	}
 	return guild

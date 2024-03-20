@@ -1,7 +1,7 @@
 import { json, type DataFunctionArgs } from '@remix-run/node'
 import { z } from 'zod'
 import { ref } from '~/bot'
-import { fetchKCDGuild, getErrorMessage } from '~/bot/utils'
+import { fetchEpicWebGuild, getErrorMessage } from '~/bot/utils'
 import { validateUserPurchase } from '~/utils/epic.server'
 
 const RequestSchema = z.object({
@@ -24,7 +24,8 @@ export async function action({ request }: DataFunctionArgs) {
 	await validateUserPurchase({ deviceToken })
 
 	const guild = await getGuild()
-	if (!guild) return { status: 'error', error: 'KCD Guild not found' } as const
+	if (!guild)
+		return { status: 'error', error: 'Epic Web Guild not found' } as const
 
 	const tokenResponse = await fetch(
 		'https://discord.com/api/v10/oauth2/token',
@@ -116,9 +117,9 @@ async function getGuild() {
 		return null
 	}
 
-	const guild = await fetchKCDGuild(client)
+	const guild = await fetchEpicWebGuild(client)
 	if (!guild) {
-		console.error('KCD Guild not found')
+		console.error('Epic Web Guild not found')
 		return null
 	}
 	return guild

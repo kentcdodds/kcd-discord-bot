@@ -3,7 +3,7 @@ import type { ForumChannel, Guild } from 'discord.js'
 import { ChannelType } from 'discord.js'
 import { z } from 'zod'
 import { ref } from '~/bot'
-import { fetchKCDGuild } from '~/bot/utils'
+import { fetchEpicWebGuild } from '~/bot/utils'
 import { LRUCache } from 'lru-cache'
 import type { CacheEntry } from 'cachified'
 import { cachified, lruCacheAdapter } from 'cachified'
@@ -62,7 +62,7 @@ export async function action({ request }: DataFunctionArgs) {
 
 	const guild = await getGuild()
 	if (!guild) {
-		return json({ status: 'error', error: 'KCD Guild not found' } as const)
+		return json({ status: 'error', error: 'Epic Web Guild not found' } as const)
 	}
 	const channel = await guild.channels.fetch(
 		process.env.CHANNEL_ID_EPIC_WEB_FORUM,
@@ -208,9 +208,9 @@ async function getGuild() {
 		return null
 	}
 
-	const guild = await fetchKCDGuild(client)
+	const guild = await fetchEpicWebGuild(client)
 	if (!guild) {
-		console.error('KCD Guild not found')
+		console.error('Epic Web Guild not found')
 		return null
 	}
 	return guild
