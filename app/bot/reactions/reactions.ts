@@ -84,8 +84,12 @@ async function officeHours(messageReaction: Discord.MessageReaction) {
 	const officeHoursChannel = getKcdOfficeHoursChannel(guild)
 	if (!officeHoursChannel) return
 
+	const officeHoursMessage = await officeHoursChannel.send(
+		`Hi ${message.author} 👋. ${message.url}`,
+	)
+
 	await message.reply(
-		`If you don't get a satisfactory answer here, feel free to ask Kent in ${officeHoursChannel} and he'll do his best to answer during his <https://kcd.im/office-hours>. To do so, formulate your question to make sure it's clear (follow the guidelines in <https://kcd.im/ask>) and a <https://kcd.im/repro> helps a lot if applicable. Then post it to ${officeHoursChannel} or join the meeting and ask live. Kent streams/records his office hours on YouTube so even if you can't make it in person, you should be able to watch his answer later.`,
+		`I've posted this to ${officeHoursChannel} (<${officeHoursMessage.url}>). If you don't get a satisfactory answer here, Kent will do his best to answer during his next <https://kcd.im/office-hours> live stream. Please provide any additional context about your question to make sure it's clear (follow the guidelines in <https://kcd.im/ask>) and a <https://kcd.im/repro> helps a lot if applicable. Kent streams/records his office hours on YouTube so even if you can't make it in person, you should be able to watch his answer later.`,
 	)
 	await messageReaction.remove()
 }
