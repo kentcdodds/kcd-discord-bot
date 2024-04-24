@@ -85,7 +85,7 @@ async function officeHours(messageReaction: Discord.MessageReaction) {
 	if (!officeHoursChannel) return
 
 	const officeHoursMessage = await officeHoursChannel.send(
-		`Hi ${message.author} 👋. ${message.url}`,
+		`Hi ${message.author} 👋. Kent will try to get your question (${message.url}) answered during his next office hours. Please let him know if you've found a solution before then.`,
 	)
 
 	await message.reply(
