@@ -28,7 +28,5 @@ async function cleanup(guild: TDiscord.Guild) {
 }
 
 export async function setup(client: TDiscord.Client) {
-	client.on('ready', () => {
-		void cleanupGuildOnInterval(client, guild => cleanup(guild), 5000)
-	})
+	void cleanupGuildOnInterval(client, guild => cleanup(guild), 5000)
 }
