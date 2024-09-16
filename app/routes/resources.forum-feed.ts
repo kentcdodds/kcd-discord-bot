@@ -103,7 +103,7 @@ async function getThreadData({
 		key: `threadData:${channel.id}:${tagIds?.join(',') || 'all'}`,
 		forceFresh,
 		ttl: 1000 * 60,
-		swr: 1000 * 60 * 5,
+		swr: 1000 * 60 * 60 * 24 * 365 * 10,
 		cache,
 		checkValue: ThreadDataSchema,
 		async getFreshValue() {
