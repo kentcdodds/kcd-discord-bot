@@ -21,7 +21,8 @@ export async function action({ request }: DataFunctionArgs) {
 	}
 	const { deviceToken, discordCode, port, scope } = result.data
 
-	await validateUserPurchase({ deviceToken })
+	const { hasEpicWebPurchase, hasEpicReactPurchase } =
+		await validateUserPurchase({ deviceToken })
 
 	const guild = await getGuild()
 	if (!guild)
@@ -85,13 +86,22 @@ export async function action({ request }: DataFunctionArgs) {
 		} as const
 	}
 	const epicWebRoleId = process.env.ROLE_ID_EPIC_WEB
+	const epicReactRoleId = process.env.ROLE_ID_EPIC_REACT_V2
 
 	// handle missing permissions gracefully
 	try {
-		await member.roles.add(epicWebRoleId).catch((e: any) => {
-			if (e?.message?.includes('Missing Permissions')) return
-			throw e
-		})
+		if (hasEpicWebPurchase) {
+			await member.roles.add(epicWebRoleId).catch((e: any) => {
+				if (e?.message?.includes('Missing Permissions')) return
+				throw e
+			})
+		}
+		if (hasEpicReactPurchase) {
+			await member.roles.add(epicReactRoleId).catch((e: any) => {
+				if (e?.message?.includes('Missing Permissions')) return
+				throw e
+			})
+		}
 	} catch (error) {
 		return json({ status: 'error', error: getErrorMessage(error) } as const, {
 			status: 500,
