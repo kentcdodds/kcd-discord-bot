@@ -7,6 +7,7 @@ import { fetchEpicWebGuild } from '~/bot/utils'
 import { LRUCache } from 'lru-cache'
 import type { CacheEntry } from 'cachified'
 import { cachified, lruCacheAdapter } from 'cachified'
+import { invariantResponse } from '../utils.js'
 
 const lru = new LRUCache<string, CacheEntry>({ max: 100 })
 const cache = lruCacheAdapter(lru)
@@ -57,16 +58,17 @@ const ThreadDataSchema = z.array(ThreadItemSchema)
 
 type ThreadItem = z.infer<typeof ThreadItemSchema>
 
-export async function action({ request }: DataFunctionArgs) {
+export async function loader({ request }: DataFunctionArgs) {
 	const reqUrl = new URL(request.url)
+	const channelId = reqUrl.searchParams.get('channelId')
+
+	invariantResponse(channelId, 'channelId search param is required')
 
 	const guild = await getGuild()
 	if (!guild) {
 		return json({ status: 'error', error: 'Epic Web Guild not found' } as const)
 	}
-	const channel = await guild.channels.fetch(
-		process.env.CHANNEL_ID_EPIC_WEB_FORUM,
-	)
+	const channel = await guild.channels.fetch(channelId)
 	if (!channel || channel.type !== ChannelType.GuildForum) {
 		return json(
 			{
@@ -80,6 +82,7 @@ export async function action({ request }: DataFunctionArgs) {
 	const threadData = await getThreadData({
 		guild,
 		channel,
+		tagIds: reqUrl.searchParams.getAll('tagId'),
 		forceFresh: reqUrl.searchParams.has('fresh'),
 	})
 	return json({ status: 'success', threadData } as const)
@@ -88,14 +91,16 @@ export async function action({ request }: DataFunctionArgs) {
 async function getThreadData({
 	guild,
 	channel,
+	tagIds,
 	forceFresh,
 }: {
 	guild: Guild
 	channel: ForumChannel
+	tagIds?: Array<string>
 	forceFresh?: boolean
 }) {
 	return cachified({
-		key: 'threadData',
+		key: `threadData:${channel.id}:${tagIds?.join(',') || 'all'}`,
 		forceFresh,
 		ttl: 1000 * 60,
 		swr: 1000 * 60 * 5,
@@ -123,9 +128,14 @@ async function getThreadData({
 			const guildEmojis = await guild.emojis.fetch()
 
 			for (const [id, thread] of allThreads.entries()) {
-				const { name, messages } = thread
+				const { name, messages, appliedTags } = thread
 
-				const tags = thread.appliedTags
+				// if we're filtering by tag, and this thread isn't in the filter, skip it
+				if (tagIds && !tagIds.some(tagId => appliedTags.includes(tagId))) {
+					continue
+				}
+
+				const tags = appliedTags
 					.map(tagId => {
 						const tag = channel.availableTags.find(tag => tag.id === tagId)
 						if (!tag) return null
