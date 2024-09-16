@@ -14,6 +14,10 @@ export function isEpicReactDev(member: Member) {
 	return hasRole(member, process.env.ROLE_ID_EPIC_REACT)
 }
 
+export function isEpicReactV2Dev(member: Member) {
+	return hasRole(member, process.env.ROLE_ID_EPIC_REACT_V2)
+}
+
 export function isTestingJs(member: Member) {
 	return hasRole(member, process.env.ROLE_ID_TESTING_JS)
 }

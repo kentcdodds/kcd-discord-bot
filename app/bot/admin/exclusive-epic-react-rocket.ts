@@ -1,11 +1,13 @@
 import type * as TDiscord from 'discord.js'
-import { isEpicReactDev } from '../utils/roles'
+import { isEpicReactDev, isEpicReactV2Dev } from '../utils/roles'
 import { getTalkToBotsChannel } from './utils'
 
 export function setup(client: TDiscord.Client) {
 	client.on('guildMemberUpdate', async (oldMember, member) => {
-		const oldHasEpicReactRole = isEpicReactDev(oldMember)
-		const newHasEpicReactRole = isEpicReactDev(member)
+		const oldHasEpicReactRole =
+			isEpicReactDev(oldMember) || isEpicReactV2Dev(oldMember)
+		const newHasEpicReactRole =
+			isEpicReactDev(member) || isEpicReactV2Dev(member)
 		const isNewEpicReactDev = newHasEpicReactRole && !oldHasEpicReactRole
 		const hasRocket = member.nickname?.includes('🚀')
 
