@@ -7,7 +7,7 @@ const UserInfoSchema = z.object({
 	purchases: z.array(
 		z.object({
 			id: z.string(),
-			status: z.literal('Valid'),
+			status: z.literal('Valid').or(z.literal('Restricted')),
 			productId: z.string(),
 		}),
 	),
