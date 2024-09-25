@@ -64,21 +64,16 @@ export async function validateUserPurchase({
 		)
 	}
 
-	const noAccessStatuses = ['Refunded', 'Disputed', 'Banned']
+	const validPurchaseStatuses = ['Valid', 'Restricted']
 
-	if (
-		userInfoResult.data.purchases.some(p => noAccessStatuses.includes(p.status))
-	) {
-		throw json(
-			{ status: 'error', error: 'User has a refunded purchase' } as const,
-			{ status: 400 },
-		)
-	}
+	const validPurchases = userInfoResult.data.purchases.filter((p) => 
+		validPurchaseStatuses.includes(p.status)
+	)
 
-	const hasEpicWebPurchase = userInfoResult.data.purchases.some(p =>
+	const hasEpicWebPurchase = validPurchases.some(p =>
 		epicWebProductIds.includes(p.productId),
 	)
-	const hasEpicReactPurchase = userInfoResult.data.purchases.some(p =>
+	const hasEpicReactPurchase = validPurchases.some(p =>
 		epicReactProductIds.includes(p.productId),
 	)
 
