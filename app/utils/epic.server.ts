@@ -7,7 +7,7 @@ const UserInfoSchema = z.object({
 	purchases: z.array(
 		z.object({
 			id: z.string(),
-			status: z.literal('Valid').or(z.literal('Restricted')),
+			status: z.enum(['Valid', 'Refunded', 'Disputed', 'Banned', 'Restricted']),
 			productId: z.string(),
 		}),
 	),
@@ -60,6 +60,17 @@ export async function validateUserPurchase({
 				error: 'Error parsing userInfo API Response',
 				details: userInfoResult.error.flatten(),
 			} as const,
+			{ status: 400 },
+		)
+	}
+
+	const noAccessStatuses = ['Refunded', 'Disputed', 'Banned']
+
+	if (
+		userInfoResult.data.purchases.some(p => noAccessStatuses.includes(p.status))
+	) {
+		throw json(
+			{ status: 'error', error: 'User has a refunded purchase' } as const,
 			{ status: 400 },
 		)
 	}
