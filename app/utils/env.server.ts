@@ -23,6 +23,7 @@ declare global {
 			ROLE_ID_EPIC_WEB: string
 			ROLE_ID_EPIC_REACT_V2: string
 			ROLE_ID_EPIC_REACT: string
+			ROLE_ID_EPIC_AI_COHORT_001: string
 			ROLE_ID_MODERATORS: string
 			ROLE_ID_MEMBER: string
 			ROLE_ID_RED: string
@@ -60,6 +61,7 @@ export function init() {
 		'ROLE_ID_EPIC_WEB',
 		'ROLE_ID_EPIC_REACT',
 		'ROLE_ID_EPIC_REACT_V2',
+		'ROLE_ID_EPIC_AI_COHORT_001',
 		'ROLE_ID_TESTING_JS',
 		'ROLE_ID_MODERATORS',
 		'ROLE_ID_MEMBER',

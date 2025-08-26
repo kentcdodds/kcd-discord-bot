@@ -5,6 +5,7 @@ import * as exclusiveModBadge from './exclusive-mod-badge'
 import * as exclusiveEpicWebStars from './exclusive-epic-web-stars'
 import * as exclusiveEpicReactRocket from './exclusive-epic-react-rocket'
 import * as exclusiveTestingJSTrophy from './exclusive-testing-js-trophy'
+import * as exclusiveEpicAiLightning from './exclusive-epic-ai-lightning'
 import * as welcome from './welcome'
 
 function setup(client: TDiscord.Client) {
@@ -14,6 +15,7 @@ function setup(client: TDiscord.Client) {
 	exclusiveEpicWebStars.setup(client)
 	exclusiveEpicReactRocket.setup(client)
 	exclusiveTestingJSTrophy.setup(client)
+	exclusiveEpicAiLightning.setup(client)
 	welcome.setup(client)
 }
 
