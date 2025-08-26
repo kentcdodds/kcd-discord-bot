@@ -19,6 +19,9 @@ async function go() {
 	const emojiFiles = (await fs.readdir(here('bot-emoji'))).filter(file =>
 		file.startsWith('bot'),
 	)
+	console.log(
+		`Found ${emojiFiles.length} emoji files:\n- ${emojiFiles.join('\n- ')}`,
+	)
 	const emojis = []
 	for (const emojiFile of emojiFiles) {
 		const parsed = path.parse(emojiFile)
@@ -30,8 +33,11 @@ async function go() {
 		})
 	}
 	const list = await rest.get(Routes.guildEmojis(KCD_GUILD_ID))
+	console.log(`Found ${list.length} existing emojis`)
+	console.log(`Uploading ${emojis.length} emojis`)
 
 	for (const emoji of emojis) {
+		console.log(`Uploading ${emoji.name}`)
 		const existingEmoji = list.find(e => e.name === emoji.name)
 		// delete it if it already exists
 		if (existingEmoji) {
