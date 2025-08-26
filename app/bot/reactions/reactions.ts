@@ -24,7 +24,7 @@ const reactions: Record<string, ReactionFn> = {
 	bottjssupport: tjssupport,
 	boterdsupport: erdsupport,
 	botewdsupport: ewdsupport,
-	botaipsupport: aipsupport,
+	boteapsupport: eapsupport,
 } as const
 
 async function help(messageReaction: Discord.MessageReaction) {
@@ -258,7 +258,7 @@ async function ewdsupport(messageReaction: Discord.MessageReaction) {
 }
 ewdsupport.description = `Replies to the message telling the user to email EpicWeb.dev support.`
 
-async function aipsupport(messageReaction: Discord.MessageReaction) {
+async function eapsupport(messageReaction: Discord.MessageReaction) {
 	void messageReaction.remove()
 	const { channel, author, guild } = messageReaction.message
 	if (!guild || !channel || !author) return
@@ -267,6 +267,6 @@ async function aipsupport(messageReaction: Discord.MessageReaction) {
 		`For support with EpicAI.pro, please email team@epicai.pro. Thanks!`,
 	)
 }
-aipsupport.description = `Replies to the message telling the user to email Epic AI support.`
+eapsupport.description = `Replies to the message telling the user to email Epic AI support.`
 
 export default reactions
