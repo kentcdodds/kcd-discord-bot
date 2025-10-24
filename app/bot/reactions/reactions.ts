@@ -312,7 +312,7 @@ async function spamBan(messageReaction: Discord.MessageReaction) {
 	// Don't allow banning the bot or other moderators
 	if (targetUser.id === guild.client.user?.id) {
 		log(
-			`${targetUser}, you used the spam ban reaction to ban the bot itself. You can't ban the bot itself.`,
+			`${reactingUser}, you used the spam ban reaction to ban ${targetUser} who is the bot itself. You can't ban the bot itself.`,
 		)
 		return
 	}
@@ -320,7 +320,7 @@ async function spamBan(messageReaction: Discord.MessageReaction) {
 	const targetMember = guild.members.cache.get(targetUser.id)
 	if (targetMember && isModerator(targetMember)) {
 		log(
-			`${targetUser}, you used the spam ban reaction to ban a moderator. You can't ban ${targetMember} who is a moderator.`,
+			`${reactingUser}, you used the spam ban reaction to ban ${targetUser} who is a moderator. You can't ban ${targetMember} who is a moderator.`,
 		)
 		return
 	}
