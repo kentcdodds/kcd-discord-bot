@@ -157,8 +157,8 @@ async function report(messageReaction: Discord.MessageReaction) {
 				},
 				fields: [
 					{
-						name: 'Message snippet',
-						value: message.content?.slice(0, 100) || 'Unknown',
+						name: 'Message Content',
+						value: message.content || 'No content',
 					},
 					{
 						name: 'Message Link',
@@ -356,6 +356,11 @@ async function spamBan(messageReaction: Discord.MessageReaction) {
 								name: 'Banned By',
 								value: reactingUser.toString(),
 								inline: true,
+							},
+							{
+								name: 'Message Content',
+								value: messageReaction.message.content || 'No content',
+								inline: false,
 							},
 							{
 								name: 'Original Message',
