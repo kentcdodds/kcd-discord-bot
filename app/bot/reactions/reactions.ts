@@ -6,6 +6,7 @@ import {
 	getReportsChannel,
 	getTalkToBotsChannel,
 } from '../utils'
+import { isModerator } from '../utils/roles'
 
 type ReactionFn = {
 	(message: Discord.MessageReaction): Promise<unknown>
@@ -25,6 +26,7 @@ const reactions: Record<string, ReactionFn> = {
 	boterdsupport: erdsupport,
 	botewdsupport: ewdsupport,
 	boteapsupport: eapsupport,
+	botspamban: spamBan,
 } as const
 
 async function help(messageReaction: Discord.MessageReaction) {
@@ -268,5 +270,111 @@ async function eapsupport(messageReaction: Discord.MessageReaction) {
 	)
 }
 eapsupport.description = `Replies to the message telling the user to email Epic AI support.`
+
+async function spamBan(messageReaction: Discord.MessageReaction) {
+	void messageReaction.remove()
+	const guild = messageReaction.message.guild
+	if (!guild) {
+		console.error('could not find message reaction guild')
+		return
+	}
+	const botsChannel = getTalkToBotsChannel(guild)
+
+	function log(...args: Parameters<Discord.TextBasedChannel['send']>) {
+		if (botsChannel) {
+			return botsChannel.send(...args)
+		} else {
+			console.log(...args)
+		}
+	}
+
+	const reactingUser = messageReaction.users.cache.first()
+	if (!reactingUser) {
+		console.error('could not find reacting user')
+		return
+	}
+
+	// Check if the reacting user is a moderator
+	const reactingMember = guild.members.cache.get(reactingUser.id)
+	if (!reactingMember || !isModerator(reactingMember)) {
+		log(
+			`${reactingUser}, you don't have permission to use the spam ban reaction. This action requires moderator permissions.`,
+		)
+		return
+	}
+
+	const targetUser = messageReaction.message.author
+	if (!targetUser) {
+		console.error('could not find target user')
+		return
+	}
+
+	// Don't allow banning the bot or other moderators
+	if (targetUser.id === guild.client.user?.id) {
+		log(
+			`${targetUser}, you used the spam ban reaction to ban the bot itself. You can't ban the bot itself.`,
+		)
+		return
+	}
+
+	const targetMember = guild.members.cache.get(targetUser.id)
+	if (targetMember && isModerator(targetMember)) {
+		log(
+			`${targetUser}, you used the spam ban reaction to ban a moderator. You can't ban ${targetMember} who is a moderator.`,
+		)
+		return
+	}
+
+	try {
+		// Ban the user
+		await guild.members.ban(targetUser, {
+			reason: `Spam ban by ${reactingUser.username}`,
+			deleteMessageDays: 7, // Delete messages from the last 7 days
+		})
+
+		// Log the action
+		const reportsChannel = getReportsChannel(guild)
+		if (reportsChannel) {
+			await reportsChannel.send({
+				embeds: [
+					{
+						title: '🚨 Spam Ban Executed',
+						color: Discord.Colors.Red,
+						description: `User has been banned for spam.`,
+						author: {
+							name: targetUser.username ?? 'Unknown',
+							icon_url: targetUser.avatarURL() ?? targetUser.defaultAvatarURL,
+							url: getMemberLink(targetUser),
+						},
+						fields: [
+							{
+								name: 'Banned User',
+								value: targetUser.toString(),
+								inline: true,
+							},
+							{
+								name: 'Banned By',
+								value: reactingUser.toString(),
+								inline: true,
+							},
+							{
+								name: 'Original Message',
+								value: getMessageLink(messageReaction.message),
+								inline: false,
+							},
+						],
+						timestamp: new Date().toISOString(),
+					},
+				],
+			})
+		}
+
+		console.log(`Successfully banned ${targetUser.username} for spam`)
+	} catch (error) {
+		console.error('Error executing spam ban:', error)
+	}
+}
+spamBan.description =
+	'Bans the message author and deletes their recent messages. Requires moderator permissions.'
 
 export default reactions
