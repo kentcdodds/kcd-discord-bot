@@ -44,6 +44,12 @@ export function getHowToJoinChannel(guild: Discord.Guild) {
 	return channel
 }
 
+export function getJobsChannel(guild: Discord.Guild) {
+	const channel = guild.channels.cache.get(process.env.CHANNEL_ID_JOBS)
+	if (channel?.type !== Discord.ChannelType.GuildText) return null
+	return channel
+}
+
 export function getLivestreamChatChannel(guild: Discord.Guild) {
 	const channel = guild.channels.cache.get(
 		process.env.CHANNEL_ID_LIVESTREAM_CHAT,

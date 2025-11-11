@@ -6,6 +6,7 @@ import * as exclusiveEpicWebStars from './exclusive-epic-web-stars'
 import * as exclusiveEpicReactRocket from './exclusive-epic-react-rocket'
 import * as exclusiveTestingJSTrophy from './exclusive-testing-js-trophy'
 import * as exclusiveEpicAiLightning from './exclusive-epic-ai-lightning'
+import * as postCleanup from './post-cleanup'
 import * as welcome from './welcome'
 
 function setup(client: TDiscord.Client) {
@@ -16,6 +17,7 @@ function setup(client: TDiscord.Client) {
 	exclusiveEpicReactRocket.setup(client)
 	exclusiveTestingJSTrophy.setup(client)
 	exclusiveEpicAiLightning.setup(client)
+	postCleanup.setup(client)
 	welcome.setup(client)
 }
 

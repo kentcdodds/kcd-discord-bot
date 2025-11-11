@@ -3,6 +3,8 @@ import {
 	getKcdOfficeHoursChannel,
 	getMemberLink,
 	getMessageLink,
+	botLog,
+	getJobsChannel,
 	getReportsChannel,
 	getTalkToBotsChannel,
 } from '../utils'
@@ -16,6 +18,7 @@ type ReactionFn = {
 const reactions: Record<string, ReactionFn> = {
 	botask: ask,
 	bothelp: help,
+	botjobs: jobs,
 	botreport: report,
 	botthread: thread,
 	botdouble: doubleMessage,
@@ -66,6 +69,91 @@ async function help(messageReaction: Discord.MessageReaction) {
 	})
 }
 help.description = 'Lists available bot reactions'
+
+async function jobs(messageReaction: Discord.MessageReaction) {
+	void messageReaction.remove()
+	const { message } = messageReaction
+	const { guild, channel, author } = message
+	if (!guild || !channel || !author) return
+	if (!channel.isTextBased()) return
+
+	const botsChannel = getTalkToBotsChannel(guild)
+	if (!botsChannel) return
+
+	const jobsChannel = getJobsChannel(guild)
+	const jobsChannelMention = jobsChannel?.toString() ?? 'the jobs channel'
+	const messageLink = getMessageLink(message)
+	const deletionDelayMinutes = 30
+	const deletionTimestamp = new Date(
+		Date.now() + deletionDelayMinutes * 60 * 1000,
+	)
+	const deletionTimestampSeconds = Math.floor(
+		deletionTimestamp.getTime() / 1000,
+	)
+
+	const notification = await botsChannel.send(
+		[
+			`Hi ${author} 👋 Thanks for sharing your opportunity!`,
+			`Please move it to ${jobsChannelMention} so folks can find it more easily.`,
+			`If the original post (${messageLink}) is still here in about ${deletionDelayMinutes} minutes I'll remove it automatically.`,
+		].join('\n'),
+	)
+
+	const rawContent = message.content?.trim()
+	let contentPreview: string
+	if (!rawContent) {
+		contentPreview = '_No content_'
+	} else {
+		const escaped = Discord.escapeMarkdown(rawContent)
+		contentPreview =
+			escaped.length > 1020 ? `${escaped.slice(0, 1017)}…` : escaped
+	}
+
+	void botLog(guild, () => ({
+		title: '🗓️ Scheduled message deletion (jobs)',
+		color: Discord.Colors.Orange,
+		description: `${author} posted a jobs message outside ${jobsChannelMention}.`,
+		fields: [
+			{
+				name: 'Message Author',
+				value: author.toString(),
+				inline: true,
+			},
+			{
+				name: 'Channel',
+				value: channel.toString(),
+				inline: true,
+			},
+			{
+				name: 'Deletion Time',
+				value: `<t:${deletionTimestampSeconds}:R>`,
+				inline: true,
+			},
+			{
+				name: 'Notification',
+				value: getMessageLink(notification),
+				inline: true,
+			},
+			{
+				name: 'Original Message',
+				value: messageLink,
+				inline: true,
+			},
+			{
+				name: 'Content Preview',
+				value: contentPreview,
+			},
+		],
+		footer: {
+			text: `scheduled-delete|jobs|${channel.id}|${
+				message.id
+			}|${deletionTimestamp.toISOString()}`,
+		},
+		timestamp: new Date().toISOString(),
+	}))
+}
+jobs.description =
+	'Notifies the author to move job posts to the jobs channel and schedules deletion in 30 minutes.'
 
 async function callKent(messageReaction: Discord.MessageReaction) {
 	await messageReaction.message.reply(
