@@ -8,6 +8,7 @@ import * as exclusiveTestingJSTrophy from './exclusive-testing-js-trophy'
 import * as exclusiveEpicAiLightning from './exclusive-epic-ai-lightning'
 import * as postCleanup from './post-cleanup'
 import * as welcome from './welcome'
+import * as helpJoining from './help-joining'
 
 function setup(client: TDiscord.Client) {
 	dedupeMessages.setup(client)
@@ -19,6 +20,7 @@ function setup(client: TDiscord.Client) {
 	exclusiveEpicAiLightning.setup(client)
 	postCleanup.setup(client)
 	welcome.setup(client)
+	helpJoining.setup(client)
 }
 
 export { setup }
