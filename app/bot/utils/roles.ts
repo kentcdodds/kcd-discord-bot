@@ -23,7 +23,10 @@ export function isTestingJs(member: Member) {
 }
 
 export function isEpicAi(member: Member) {
-	return hasRole(member, process.env.ROLE_ID_EPIC_AI_COHORT_001)
+	return (
+		hasRole(member, process.env.ROLE_ID_EPIC_AI_COHORT_001) ||
+		hasRole(member, process.env.ROLE_ID_EPIC_AI)
+	)
 }
 
 export function isModerator(member: Member) {
