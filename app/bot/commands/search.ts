@@ -4,16 +4,26 @@ import type { AutocompleteFn, CommandFn } from './utils'
 
 type Result = {
 	url: string
-	segment:
-		| 'Blog Posts'
-		| 'Chats with Kent Episodes'
-		| 'Talks'
-		| 'Call Kent Podcast Episodes'
-		| 'Workshops'
+	// Machine category returned by the search API (examples: "blog", "page", "ck").
+	segment: string
 	title: string
+	summary?: string
+	imageUrl?: string
+	imageAlt?: string
 }
 
-const segmentEmoji: Record<Result['segment'], string> = {
+const segmentEmoji: Record<string, string> = {
+	// New machine categories
+	blog: '📝',
+	page: '📄',
+	ck: '💬',
+	cwk: '🔧',
+	talk: '🗣',
+	resume: '📄',
+	credit: '🙏',
+	testimonial: '💬',
+
+	// Back-compat: older API returned human-readable segments
 	'Blog Posts': '📝',
 	'Chats with Kent Episodes': '💬',
 	Talks: '🗣',
@@ -21,15 +31,50 @@ const segmentEmoji: Record<Result['segment'], string> = {
 	Workshops: '🔧',
 }
 
+function getSegmentEmoji(segment: string) {
+	return segmentEmoji[segment] ?? '🔎'
+}
+
+const discordEmbedLimits = {
+	title: 256,
+	description: 4096,
+	fieldName: 256,
+	fieldValue: 1024,
+} as const
+
+function truncate(text: string, maxLength: number) {
+	if (text.length <= maxLength) return text
+	if (maxLength <= 3) return text.slice(0, maxLength)
+	return `${text.slice(0, maxLength - 3).trimEnd()}...`
+}
+
+function collapseWhitespace(text: string) {
+	return text.replace(/\s+/g, ' ').trim()
+}
+
+function getSafeHttpUrl(maybeUrl: string | undefined) {
+	if (!maybeUrl) return undefined
+	const url = getURL(maybeUrl)
+	if (!url) return undefined
+	if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined
+	return url.toString()
+}
+
+function isResult(maybeResult: unknown): maybeResult is Result {
+	if (!maybeResult || typeof maybeResult !== 'object') return false
+	const result = maybeResult as Record<string, unknown>
+	if (typeof result.url !== 'string') return false
+	if (typeof result.segment !== 'string') return false
+	if (typeof result.title !== 'string') return false
+	if (result.summary != null && typeof result.summary !== 'string') return false
+	if (result.imageUrl != null && typeof result.imageUrl !== 'string') return false
+	if (result.imageAlt != null && typeof result.imageAlt !== 'string') return false
+	return true
+}
+
 function isResults(maybeResults: unknown): maybeResults is Array<Result> {
 	if (!Array.isArray(maybeResults)) return false
-	return maybeResults.every(
-		(result: any) =>
-			typeof result === 'object' ||
-			typeof result.url === 'string' ||
-			typeof result.segment === 'string' ||
-			typeof result.title === 'string',
-	)
+	return maybeResults.every(isResult)
 }
 
 async function searchAPI(
@@ -74,14 +119,31 @@ export const autocompleteSearch: AutocompleteFn = async interaction => {
 		}
 
 		await interaction.respond(
-			searchResponse.results.slice(0, 25).map(({ url, title, segment }) => {
+			searchResponse.results.slice(0, 25).map(result => {
+				let { url } = result
+				const { title, segment } = result
+				const summary = result.summary ? collapseWhitespace(result.summary) : ''
 				if (url.length > 100) {
 					console.log('too long', { url })
-					// this should work out in the end 🤷‍♂️
-					url = title.slice(0, 100)
+					// Try to shrink the URL by stripping search/hash. If it's still too
+					// long, fall back to a short query-ish value (this will still search).
+					const parsedUrl = getURL(url)
+					if (parsedUrl) {
+						parsedUrl.search = ''
+						parsedUrl.hash = ''
+						const shrunk = parsedUrl.toString()
+						if (shrunk.length <= 100) url = shrunk
+					}
+					if (url.length > 100) url = title.slice(0, 100)
 				}
+				const emoji = getSegmentEmoji(segment)
+				const baseName = `${emoji} ${title}`.trim()
+				const withSummary =
+					summary && baseName.length + 3 < 100
+						? `${baseName} - ${truncate(summary, 100 - baseName.length - 3)}`
+						: baseName
 				return {
-					name: `${segmentEmoji[segment] ?? ''} ${title}`.slice(0, 100),
+					name: truncate(withSummary, 100),
 					value: url,
 				}
 			}),
@@ -122,23 +184,80 @@ export const search: CommandFn = async interaction => {
 		})
 	}
 
-	if (searchResponse.results.length === 1 && searchResponse.results[0]) {
-		const result = searchResponse.results[0]
-		return interaction.reply(`${toMessage} ${result.url}`.trim())
+	const results = searchResponse.results
+	if (results.length === 1 && results[0]) {
+		const result = results[0]
+		const safeThumbnailUrl = getSafeHttpUrl(result.imageUrl)
+		const summary = result.summary ? collapseWhitespace(result.summary) : ''
+		return interaction.reply({
+			content: toMessage || undefined,
+			embeds: [
+				{
+					title: truncate(result.title, discordEmbedLimits.title),
+					url: result.url,
+					description: summary
+						? truncate(summary, discordEmbedLimits.description)
+						: undefined,
+					thumbnail: safeThumbnailUrl ? { url: safeThumbnailUrl } : undefined,
+				},
+			],
+		})
 	}
 
-	const didYouMean = searchResponse.results.length
-		? `Did you mean ${listify(
-				searchResponse.results.map(r => r.title),
+	if (results.length > 1) {
+		const encodedQuery = encodeURIComponent(query)
+		const searchPage = `https://kentcdodds.com/s/${encodedQuery}`
+		const topResults = results.slice(0, 5)
+		const safeThumbnailUrl = getSafeHttpUrl(topResults[0]?.imageUrl)
+
+		const fields = topResults.map(result => {
+			const emoji = getSegmentEmoji(result.segment)
+			const name = truncate(
+				`${emoji} ${result.title}`.trim(),
+				discordEmbedLimits.fieldName,
+			)
+
+			const urlLine = result.url
+			const summary = result.summary ? collapseWhitespace(result.summary) : ''
+			if (!summary) return { name, value: truncate(urlLine, discordEmbedLimits.fieldValue) }
+
+			// Field values are capped at 1024, and we want the URL intact when possible.
+			const summaryLimit = Math.min(
+				300, // keep overall embed size safely under the 6000 char limit
+				discordEmbedLimits.fieldValue - urlLine.length - 1,
+			)
+			const truncatedSummary = summaryLimit > 0 ? truncate(summary, summaryLimit) : ''
+			const value = truncatedSummary
+				? `${truncatedSummary}\n${urlLine}`
+				: truncate(urlLine, discordEmbedLimits.fieldValue)
+			return { name, value }
+		})
+
+		return interaction.reply({
+			content: toMessage || undefined,
+			embeds: [
 				{
-					type: 'disjunction',
-					stringify: JSON.stringify,
+					title: truncate(
+						`Search results for "${query}"`,
+						discordEmbedLimits.title,
+					),
+					url: searchPage,
+					thumbnail: safeThumbnailUrl ? { url: safeThumbnailUrl } : undefined,
+					fields,
 				},
-		  )}?`
+			],
+		})
+	}
+
+	const didYouMean = results.length
+		? `Did you mean ${listify(results.map(r => r.title), {
+				type: 'disjunction',
+				stringify: JSON.stringify,
+		  })}?`
 		: ''
 	await interaction.reply({
 		ephemeral: true,
-		content: `I couldn't find a single result for: "${query}"\n\n${didYouMean}`,
+		content: `I couldn't find any results for: "${query}"\n\n${didYouMean}`,
 	})
 }
 search.description = `Search Kent's content`
