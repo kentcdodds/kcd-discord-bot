@@ -29,6 +29,8 @@ function getSegmentEmoji(segment: string) {
 }
 
 const discordEmbedLimits = {
+	// Total chars across embed text fields (title/description/field names/values/etc.)
+	total: 6000,
 	title: 256,
 	description: 4096,
 	fieldName: 256,
@@ -209,45 +211,68 @@ export const search: CommandFn = async interaction => {
 		const topResults = results.slice(0, 5)
 		const safeThumbnailUrl = getSafeHttpUrl(topResults[0]?.imageUrl)
 
-		const fields = topResults.map(result => {
+		const normalizedQuery = truncate(
+			collapseWhitespace(query),
+			discordEmbedLimits.title - 'Search results for ""'.length,
+		)
+		const embedTitle = truncate(
+			`Search results for "${normalizedQuery}"`,
+			discordEmbedLimits.title,
+		)
+
+		// Discord enforces a 6000-character limit across all embed text fields.
+		// Build fields with a running budget to prevent API 400s in edge cases
+		// (e.g. very long URLs/titles).
+		let usedChars = embedTitle.length
+		const fields: Array<{ name: string; value: string }> = []
+		for (const result of topResults) {
 			const emoji = getSegmentEmoji(result.segment)
 			const name = truncate(
 				`${emoji} ${result.title}`.trim(),
 				discordEmbedLimits.fieldName,
 			)
 
+			// Remaining embed budget for this field's value after accounting for name.
+			const remainingForValue = discordEmbedLimits.total - usedChars - name.length
+			if (remainingForValue <= 0) break
+			const maxValueLength = Math.min(
+				discordEmbedLimits.fieldValue,
+				remainingForValue,
+			)
+
 			const urlLine = result.url
 			const summary = result.summary ? collapseWhitespace(result.summary) : ''
+
+			let value = ''
 			if (!summary) {
-				return {
-					name,
-					value: truncate(urlLine, discordEmbedLimits.fieldValue),
-				}
+				value = truncate(urlLine, maxValueLength)
+			} else if (urlLine.length + 1 >= maxValueLength) {
+				// Not enough room for "summary\nurl", prioritize URL.
+				value = truncate(urlLine, maxValueLength)
+			} else {
+				// Keep URL intact when possible by truncating summary first.
+				const summaryLimit = Math.min(300, maxValueLength - urlLine.length - 1)
+				const truncatedSummary = truncate(summary, summaryLimit)
+				value = `${truncatedSummary}\n${urlLine}`
 			}
 
-			// Field values are capped at 1024, and we want the URL intact when possible.
-			const summaryLimit = Math.min(
-				300, // keep overall embed size safely under the 6000 char limit
-				discordEmbedLimits.fieldValue - urlLine.length - 1,
-			)
-			const truncatedSummary = summaryLimit > 0 ? truncate(summary, summaryLimit) : ''
-			const value = truncatedSummary
-				? `${truncatedSummary}\n${urlLine}`
-				: truncate(urlLine, discordEmbedLimits.fieldValue)
-			return { name, value }
-		})
+			// Discord requires non-empty field values.
+			if (!value) continue
 
-		const normalizedQuery = truncate(
-			collapseWhitespace(query),
-			discordEmbedLimits.title - 'Search results for ""'.length,
-		)
+			fields.push({ name, value })
+			usedChars += name.length + value.length
+
+			// Top 3–5 results requirement: we try up to 5; stop early if we're out of budget.
+			if (usedChars >= discordEmbedLimits.total) break
+		}
+
 		const embed: {
 			title: string
 			url: string
 			fields: Array<{ name: string; value: string }>
 			thumbnail?: { url: string }
 		} = {
-			title: truncate(`Search results for "${normalizedQuery}"`, discordEmbedLimits.title),
+			title: embedTitle,
 			url: searchPage,
 			fields,
 		}
