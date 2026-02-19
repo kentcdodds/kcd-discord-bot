@@ -16,8 +16,8 @@ const segmentEmoji: Record<string, string> = {
 	// New machine categories
 	blog: '📝',
 	page: '📄',
-	ck: '💬',
-	cwk: '🔧',
+	cwk: '💬',
+	ck: '📳',
 	talk: '🗣',
 	resume: '📄',
 	credit: '🙏',
