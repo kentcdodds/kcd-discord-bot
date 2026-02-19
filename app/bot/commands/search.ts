@@ -189,18 +189,24 @@ export const search: CommandFn = async interaction => {
 		const result = results[0]
 		const safeThumbnailUrl = getSafeHttpUrl(result.imageUrl)
 		const summary = result.summary ? collapseWhitespace(result.summary) : ''
+		const embed: {
+			title: string
+			url: string
+			description?: string
+			thumbnail?: { url: string }
+		} = {
+			title: truncate(result.title, discordEmbedLimits.title),
+			url: result.url,
+		}
+		if (summary) {
+			embed.description = truncate(summary, discordEmbedLimits.description)
+		}
+		if (safeThumbnailUrl) {
+			embed.thumbnail = { url: safeThumbnailUrl }
+		}
 		return interaction.reply({
 			content: toMessage || undefined,
-			embeds: [
-				{
-					title: truncate(result.title, discordEmbedLimits.title),
-					url: result.url,
-					description: summary
-						? truncate(summary, discordEmbedLimits.description)
-						: undefined,
-					thumbnail: safeThumbnailUrl ? { url: safeThumbnailUrl } : undefined,
-				},
-			],
+			embeds: [embed],
 		})
 	}
 
@@ -219,7 +225,12 @@ export const search: CommandFn = async interaction => {
 
 			const urlLine = result.url
 			const summary = result.summary ? collapseWhitespace(result.summary) : ''
-			if (!summary) return { name, value: truncate(urlLine, discordEmbedLimits.fieldValue) }
+			if (!summary) {
+				return {
+					name,
+					value: truncate(urlLine, discordEmbedLimits.fieldValue),
+				}
+			}
 
 			// Field values are capped at 1024, and we want the URL intact when possible.
 			const summaryLimit = Math.min(
@@ -233,19 +244,27 @@ export const search: CommandFn = async interaction => {
 			return { name, value }
 		})
 
+		const normalizedQuery = truncate(
+			collapseWhitespace(query),
+			discordEmbedLimits.title - 'Search results for ""'.length,
+		)
+		const embed: {
+			title: string
+			url: string
+			fields: Array<{ name: string; value: string }>
+			thumbnail?: { url: string }
+		} = {
+			title: truncate(`Search results for "${normalizedQuery}"`, discordEmbedLimits.title),
+			url: searchPage,
+			fields,
+		}
+		if (safeThumbnailUrl) {
+			embed.thumbnail = { url: safeThumbnailUrl }
+		}
+
 		return interaction.reply({
 			content: toMessage || undefined,
-			embeds: [
-				{
-					title: truncate(
-						`Search results for "${query}"`,
-						discordEmbedLimits.title,
-					),
-					url: searchPage,
-					thumbnail: safeThumbnailUrl ? { url: safeThumbnailUrl } : undefined,
-					fields,
-				},
-			],
+			embeds: [embed],
 		})
 	}
 
