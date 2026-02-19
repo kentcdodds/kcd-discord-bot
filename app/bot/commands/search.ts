@@ -261,15 +261,9 @@ export const search: CommandFn = async interaction => {
 		})
 	}
 
-	const didYouMean = results.length
-		? `Did you mean ${listify(results.map(r => r.title), {
-				type: 'disjunction',
-				stringify: JSON.stringify,
-		  })}?`
-		: ''
 	await interaction.reply({
 		ephemeral: true,
-		content: `I couldn't find any results for: "${query}"\n\n${didYouMean}`,
+		content: `I couldn't find any results for: "${query}"`,
 	})
 }
 search.description = `Search Kent's content`
