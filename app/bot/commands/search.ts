@@ -1,5 +1,5 @@
 import { invariant } from '~/utils'
-import { getMember, listify } from '../utils/index'
+import { getMember } from '../utils/index'
 import type { AutocompleteFn, CommandFn } from './utils'
 
 type Result = {
