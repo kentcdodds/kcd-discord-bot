@@ -22,13 +22,6 @@ const segmentEmoji: Record<string, string> = {
 	resume: '📄',
 	credit: '🙏',
 	testimonial: '💬',
-
-	// Back-compat: older API returned human-readable segments
-	'Blog Posts': '📝',
-	'Chats with Kent Episodes': '💬',
-	Talks: '🗣',
-	'Call Kent Podcast Episodes': '📳',
-	Workshops: '🔧',
 }
 
 function getSegmentEmoji(segment: string) {
