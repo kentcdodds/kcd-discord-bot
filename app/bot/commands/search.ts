@@ -13,9 +13,11 @@ type Result = {
 }
 
 const segmentEmoji: Record<string, string> = {
-	// New machine categories
+	// Search API "segment" categories returned by kentcdodds.com.
 	blog: '📝',
 	page: '📄',
+	'jsx-page': '📄',
+	youtube: '📺',
 	cwk: '💬',
 	ck: '📳',
 	talk: '🗣',
@@ -25,7 +27,8 @@ const segmentEmoji: Record<string, string> = {
 }
 
 function getSegmentEmoji(segment: string) {
-	return segmentEmoji[segment] ?? '🔎'
+	const normalized = segment.trim().toLowerCase()
+	return segmentEmoji[normalized] ?? '🔎'
 }
 
 const discordEmbedLimits = {
