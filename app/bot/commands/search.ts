@@ -32,6 +32,15 @@ const discordEmbedLimits = {
 } as const
 
 const searchResultLimit = 20 as const
+const searchSelectionPrefix = 'search-selection:'
+const searchSelectionTtlMs = 5 * 60 * 1000
+
+const searchSelectionCache = new Map<
+	string,
+	{ userId: string; url: string; expiresAt: number }
+>()
+
+let searchSelectionSequence = 0
 
 function truncate(text: string, maxLength: number) {
 	if (text.length <= maxLength) return text
@@ -49,6 +58,39 @@ function getSafeHttpUrl(maybeUrl: string | undefined) {
 	if (!url) return undefined
 	if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined
 	return url.toString()
+}
+
+function pruneExpiredSearchSelections(now = Date.now()) {
+	for (const [token, entry] of searchSelectionCache) {
+		if (entry.expiresAt <= now) {
+			searchSelectionCache.delete(token)
+		}
+	}
+}
+
+function createSearchSelectionToken(userId: string, url: string) {
+	const now = Date.now()
+	pruneExpiredSearchSelections(now)
+
+	const token = `${searchSelectionPrefix}${userId}:${now.toString(36)}:${searchSelectionSequence.toString(36)}`
+	searchSelectionSequence += 1
+	searchSelectionCache.set(token, {
+		userId,
+		url,
+		expiresAt: now + searchSelectionTtlMs,
+	})
+
+	return token
+}
+
+function consumeSearchSelectionToken(token: string, userId: string) {
+	pruneExpiredSearchSelections()
+
+	const entry = searchSelectionCache.get(token)
+	if (!entry || entry.userId !== userId) return null
+
+	searchSelectionCache.delete(token)
+	return entry.url
 }
 
 export const autocompleteSearch: AutocompleteFn = async interaction => {
@@ -79,7 +121,7 @@ export const autocompleteSearch: AutocompleteFn = async interaction => {
 					: baseName
 			return {
 				name: truncate(withSummary, 100),
-				value: queryValue,
+				value: createSearchSelectionToken(interaction.user.id, result.url),
 			}
 		}),
 	)
@@ -104,6 +146,20 @@ export const search: CommandFn = async interaction => {
 	const toUser = interaction.options.getUser('user')
 	const toMember = toUser ? getMember(guild, toUser.id) : null
 	const toMessage = toMember ? toMember.toString() : ''
+
+	if (query.startsWith(searchSelectionPrefix)) {
+		const selectedUrl = consumeSearchSelectionToken(query, interaction.user.id)
+		if (!selectedUrl) {
+			return interaction.reply({
+				ephemeral: true,
+				content: 'That search selection expired. Please run /search again.',
+			})
+		}
+
+		return interaction.reply({
+			content: [toMessage, selectedUrl].filter(Boolean).join(' '),
+		})
+	}
 
 	const searchResponse = await searchAPI(query, { topK: searchResultLimit })
 	if (searchResponse.type === 'error') {

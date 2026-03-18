@@ -32,10 +32,11 @@ function parseSearchRequestBody(init: RequestInit | undefined) {
 	return JSON.parse(String(init?.body)) as { query: string; topK: number }
 }
 
-function createInteraction(query: string) {
+function createInteraction(query: string, userId = 'user-1') {
 	const replies: Array<unknown> = []
 	const interaction = {
 		guild: {},
+		user: { id: userId },
 		options: {
 			get(name: string) {
 				if (name === 'query') return { value: query }
@@ -57,10 +58,11 @@ function createInteraction(query: string) {
 	}
 }
 
-function createAutocompleteInteraction(query: string) {
+function createAutocompleteInteraction(query: string, userId = 'user-1') {
 	const responses: Array<unknown> = []
 	const interaction = {
 		guild: {},
+		user: { id: userId },
 		options: {
 			getFocused(required: true) {
 				void required
@@ -84,7 +86,7 @@ test.afterEach(() => {
 	restoreSearchWorkerEnv()
 })
 
-test('search autocomplete keeps the raw user text as the submitted value', async () => {
+test('search autocomplete returns per-result selection tokens', async () => {
 	setSearchWorkerEnv()
 	const query = 'react-testing-library'
 	const capturedBodies: Array<{ query: string; topK: number }> = []
@@ -116,17 +118,62 @@ test('search autocomplete keeps the raw user text as the submitted value', async
 	await autocompleteSearch(interaction)
 
 	assert.deepEqual(capturedBodies, [{ query, topK: 20 }])
-	assert.deepEqual(responses, [
+	assert.equal(responses.length, 1)
+	const [choices] = responses as [
+		Array<{ name: string; value: string }>,
+	]
+	assert.deepEqual(
+		choices.map(choice => choice.name),
 		[
-			{
-				name: '📝 React Testing Library Setup - Learn the setup.',
-				value: query,
-			},
-			{
-				name: '📺 React Testing Library Video - Watch the walkthrough.',
-				value: query,
-			},
+			'📝 React Testing Library Setup - Learn the setup.',
+			'📺 React Testing Library Video - Watch the walkthrough.',
 		],
+	)
+	assert.equal(choices.length, 2)
+	assert.match(choices[0]!.value, /^search-selection:user-1:/)
+	assert.match(choices[1]!.value, /^search-selection:user-1:/)
+	assert.notEqual(choices[0]!.value, choices[1]!.value)
+})
+
+test('search returns the selected autocomplete result URL without rerunning search', async () => {
+	setSearchWorkerEnv()
+	let fetchCallCount = 0
+	global.fetch = (async (_input, init) => {
+		fetchCallCount += 1
+		assert.deepEqual(parseSearchRequestBody(init), {
+			query: 'react-testing-library',
+			topK: 20,
+		})
+		return new Response(
+			JSON.stringify({
+				ok: true,
+				results: [
+					{
+						type: 'blog',
+						title: 'React Testing Library Setup',
+						url: 'https://kentcdodds.com/blog/react-testing-library-setup',
+						snippet: 'Learn the setup.',
+					},
+				],
+			}),
+			{ status: 200, headers: { 'Content-Type': 'application/json' } },
+		)
+	}) as typeof fetch
+
+	const autocomplete = createAutocompleteInteraction('react-testing-library')
+	await autocompleteSearch(autocomplete.interaction)
+
+	const selectionToken = (
+		autocomplete.responses[0] as Array<{ name: string; value: string }>
+	)[0]!.value
+	const { interaction, replies } = createInteraction(selectionToken)
+	await search(interaction)
+
+	assert.equal(fetchCallCount, 1)
+	assert.deepEqual(replies, [
+		{
+			content: 'https://kentcdodds.com/blog/react-testing-library-setup',
+		},
 	])
 })
 
