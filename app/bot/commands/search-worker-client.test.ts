@@ -8,14 +8,16 @@ const originalSearchWorkerUrl = process.env.SEARCH_WORKER_URL
 const originalSearchWorkerToken = process.env.SEARCH_WORKER_TOKEN
 
 function restoreSearchWorkerEnv() {
+	const mutableEnv = process.env as Record<string, string | undefined>
+
 	if (originalSearchWorkerUrl == null) {
-		delete process.env.SEARCH_WORKER_URL
+		delete mutableEnv.SEARCH_WORKER_URL
 	} else {
 		process.env.SEARCH_WORKER_URL = originalSearchWorkerUrl
 	}
 
 	if (originalSearchWorkerToken == null) {
-		delete process.env.SEARCH_WORKER_TOKEN
+		delete mutableEnv.SEARCH_WORKER_TOKEN
 	} else {
 		process.env.SEARCH_WORKER_TOKEN = originalSearchWorkerToken
 	}
