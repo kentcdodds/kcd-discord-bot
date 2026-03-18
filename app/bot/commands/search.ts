@@ -1,19 +1,10 @@
 import { invariant } from '~/utils'
 import { getMember } from '../utils/index'
+import { searchAPI } from './search-worker-client'
 import type { AutocompleteFn, CommandFn } from './utils'
 
-type Result = {
-	url: string
-	// Machine category returned by the search API (examples: "blog", "page", "ck").
-	segment: string
-	title: string
-	summary?: string
-	imageUrl?: string
-	imageAlt?: string
-}
-
 const segmentEmoji: Record<string, string> = {
-	// Search API "segment" categories returned by kentcdodds.com.
+	// Search worker "type" categories returned by kentcdodds.com.
 	blog: '📝',
 	page: '📄',
 	'jsx-page': '📄',
@@ -40,6 +31,8 @@ const discordEmbedLimits = {
 	fieldValue: 1024,
 } as const
 
+const searchResultLimit = 20 as const
+
 function truncate(text: string, maxLength: number) {
 	if (text.length <= maxLength) return text
 	if (maxLength <= 3) return text.slice(0, maxLength)
@@ -58,55 +51,14 @@ function getSafeHttpUrl(maybeUrl: string | undefined) {
 	return url.toString()
 }
 
-function isResult(maybeResult: unknown): maybeResult is Result {
-	if (!maybeResult || typeof maybeResult !== 'object') return false
-	const result = maybeResult as Record<string, unknown>
-	if (typeof result.url !== 'string') return false
-	if (typeof result.segment !== 'string') return false
-	if (typeof result.title !== 'string') return false
-	if (result.summary != null && typeof result.summary !== 'string') return false
-	if (result.imageUrl != null && typeof result.imageUrl !== 'string') return false
-	if (result.imageAlt != null && typeof result.imageAlt !== 'string') return false
-	return true
-}
-
-function isResults(maybeResults: unknown): maybeResults is Array<Result> {
-	if (!Array.isArray(maybeResults)) return false
-	return maybeResults.every(isResult)
-}
-
-async function searchAPI(
-	query: string,
-): Promise<
-	{ type: 'success'; results: Array<Result> } | { type: 'error'; error: string }
-> {
-	if (!query) return { type: 'success', results: [] }
-	const encodedQuery = encodeURIComponent(query)
-	const response = await fetch(
-		`https://kentcdodds.com/resources/search?query=${encodedQuery}`,
-	)
-	if (!response.ok) {
-		return {
-			type: 'error',
-			error: `Could not search for "${query}": ${response.statusText}`,
-		}
-	}
-	const results = (await response.json()) as any
-	if (typeof results.error === 'string') {
-		return { type: 'error', error: results.error }
-	}
-	if (!isResults(results)) {
-		return { type: 'error', error: 'Results from the API are not as expected' }
-	}
-	return { type: 'success', results }
-}
-
 export const autocompleteSearch: AutocompleteFn = async interaction => {
 	const { guild } = interaction
 	invariant(guild, 'guild is required')
 	const input = interaction.options.getFocused(true)
 	if (input.name === 'query') {
-		const searchResponse = await searchAPI(input.value)
+		const searchResponse = await searchAPI(input.value, {
+			topK: searchResultLimit,
+		})
 		const encodedQuery = encodeURIComponent(input.value)
 		const searchPage = `https://kentcdodds.com/s/${encodedQuery}`
 		if (searchResponse.type === 'error') {
@@ -117,7 +69,7 @@ export const autocompleteSearch: AutocompleteFn = async interaction => {
 		}
 
 		await interaction.respond(
-			searchResponse.results.slice(0, 25).map(result => {
+			searchResponse.results.slice(0, searchResultLimit).map(result => {
 				let { url } = result
 				const { title, segment } = result
 				const summary = result.summary ? collapseWhitespace(result.summary) : ''
@@ -174,7 +126,7 @@ export const search: CommandFn = async interaction => {
 		return interaction.reply(`${toMessage} ${url}`.trim())
 	}
 
-	const searchResponse = await searchAPI(query)
+	const searchResponse = await searchAPI(query, { topK: searchResultLimit })
 	if (searchResponse.type === 'error') {
 		return interaction.reply({
 			ephemeral: true,
@@ -236,7 +188,8 @@ export const search: CommandFn = async interaction => {
 			)
 
 			// Remaining embed budget for this field's value after accounting for name.
-			const remainingForValue = discordEmbedLimits.total - usedChars - name.length
+			const remainingForValue =
+				discordEmbedLimits.total - usedChars - name.length
 			if (remainingForValue <= 0) break
 			const maxValueLength = Math.min(
 				discordEmbedLimits.fieldValue,
