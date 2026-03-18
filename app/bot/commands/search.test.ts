@@ -28,6 +28,10 @@ function setSearchWorkerEnv() {
 	process.env.SEARCH_WORKER_TOKEN = 'test-worker-token'
 }
 
+function parseSearchRequestBody(init: RequestInit | undefined) {
+	return JSON.parse(String(init?.body)) as { query: string; topK: number }
+}
+
 function createInteraction(query: string) {
 	const replies: Array<unknown> = []
 	const interaction = {
@@ -62,7 +66,7 @@ test('search forwards raw query text to searchAPI', async () => {
 	setSearchWorkerEnv()
 	const capturedBodies: Array<{ query: string; topK: number }> = []
 	global.fetch = (async (_input, init) => {
-		capturedBodies.push(JSON.parse(String(init?.body)))
+		capturedBodies.push(parseSearchRequestBody(init))
 		return new Response(
 			JSON.stringify({
 				ok: true,
@@ -96,7 +100,7 @@ test('search does not use a URL fast path for query text', async () => {
 	let fetchCallCount = 0
 	global.fetch = (async (_input, init) => {
 		fetchCallCount += 1
-		assert.deepEqual(JSON.parse(String(init?.body)), { query, topK: 20 })
+		assert.deepEqual(parseSearchRequestBody(init), { query, topK: 20 })
 		return new Response(
 			JSON.stringify({
 				ok: true,
