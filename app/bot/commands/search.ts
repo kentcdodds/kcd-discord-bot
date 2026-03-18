@@ -1,7 +1,7 @@
 import { invariant } from '~/utils'
 import { getMember } from '../utils/index'
 import { searchAPI } from './search-worker-client'
-import type { CommandFn } from './utils'
+import type { AutocompleteFn, CommandFn } from './utils'
 
 const segmentEmoji: Record<string, string> = {
 	// Search worker "type" categories returned by kentcdodds.com.
@@ -49,6 +49,39 @@ function getSafeHttpUrl(maybeUrl: string | undefined) {
 	if (!url) return undefined
 	if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined
 	return url.toString()
+}
+
+export const autocompleteSearch: AutocompleteFn = async interaction => {
+	const { guild } = interaction
+	invariant(guild, 'guild is required')
+	const input = interaction.options.getFocused(true)
+	if (input.name !== 'query') return
+
+	const query = input.value
+	const searchResponse = await searchAPI(query, {
+		topK: searchResultLimit,
+	})
+	if (searchResponse.type === 'error') {
+		await interaction.respond([{ name: searchResponse.error, value: query }])
+		return
+	}
+
+	await interaction.respond(
+		searchResponse.results.slice(0, searchResultLimit).map(result => {
+			const { title, segment } = result
+			const summary = result.summary ? collapseWhitespace(result.summary) : ''
+			const emoji = getSegmentEmoji(segment)
+			const baseName = `${emoji} ${title}`.trim()
+			const withSummary =
+				summary && baseName.length + 3 < 100
+					? `${baseName} - ${truncate(summary, 100 - baseName.length - 3)}`
+					: baseName
+			return {
+				name: truncate(withSummary, 100),
+				value: query,
+			}
+		}),
+	)
 }
 
 function getURL(maybeUrl: string) {

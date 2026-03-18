@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { search } from './search'
+import { autocompleteSearch, search } from './search'
 
 const originalFetch = global.fetch
 const originalSearchWorkerUrl = process.env.SEARCH_WORKER_URL
@@ -57,9 +57,77 @@ function createInteraction(query: string) {
 	}
 }
 
+function createAutocompleteInteraction(query: string) {
+	const responses: Array<unknown> = []
+	const interaction = {
+		guild: {},
+		options: {
+			getFocused(required: true) {
+				void required
+				return { name: 'query', value: query }
+			},
+		},
+		async respond(payload: unknown) {
+			responses.push(payload)
+			return payload
+		},
+	}
+
+	return {
+		responses,
+		interaction: interaction as unknown as Parameters<typeof autocompleteSearch>[0],
+	}
+}
+
 test.afterEach(() => {
 	global.fetch = originalFetch
 	restoreSearchWorkerEnv()
+})
+
+test('search autocomplete keeps the raw user text as the submitted value', async () => {
+	setSearchWorkerEnv()
+	const query = 'react-testing-library'
+	const capturedBodies: Array<{ query: string; topK: number }> = []
+	global.fetch = (async (_input, init) => {
+		capturedBodies.push(parseSearchRequestBody(init))
+		return new Response(
+			JSON.stringify({
+				ok: true,
+				results: [
+					{
+						type: 'blog',
+						title: 'React Testing Library Setup',
+						url: 'https://kentcdodds.com/blog/react-testing-library-setup',
+						snippet: 'Learn the setup.',
+					},
+					{
+						type: 'youtube',
+						title: 'React Testing Library Video',
+						url: 'https://kentcdodds.com/calls/03/12/react-testing-library',
+						snippet: 'Watch the walkthrough.',
+					},
+				],
+			}),
+			{ status: 200, headers: { 'Content-Type': 'application/json' } },
+		)
+	}) as typeof fetch
+
+	const { interaction, responses } = createAutocompleteInteraction(query)
+	await autocompleteSearch(interaction)
+
+	assert.deepEqual(capturedBodies, [{ query, topK: 20 }])
+	assert.deepEqual(responses, [
+		[
+			{
+				name: '📝 React Testing Library Setup - Learn the setup.',
+				value: query,
+			},
+			{
+				name: '📺 React Testing Library Video - Watch the walkthrough.',
+				value: query,
+			},
+		],
+	])
 })
 
 test('search forwards raw query text to searchAPI', async () => {
