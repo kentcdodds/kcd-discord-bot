@@ -177,6 +177,48 @@ test('search returns the selected autocomplete result URL without rerunning sear
 	])
 })
 
+test('search returns the selected autocomplete result as a full URL when worker returns a pathname', async () => {
+	setSearchWorkerEnv()
+	let fetchCallCount = 0
+	global.fetch = (async (_input, init) => {
+		fetchCallCount += 1
+		assert.deepEqual(parseSearchRequestBody(init), {
+			query: 'relative-search-result',
+			topK: 20,
+		})
+		return new Response(
+			JSON.stringify({
+				ok: true,
+				results: [
+					{
+						type: 'blog',
+						title: 'Relative search result',
+						url: '/blog/relative-search-result',
+						snippet: 'Learn the setup.',
+					},
+				],
+			}),
+			{ status: 200, headers: { 'Content-Type': 'application/json' } },
+		)
+	}) as typeof fetch
+
+	const autocomplete = createAutocompleteInteraction('relative-search-result')
+	await autocompleteSearch(autocomplete.interaction)
+
+	const selectionToken = (
+		autocomplete.responses[0] as Array<{ name: string; value: string }>
+	)[0]!.value
+	const { interaction, replies } = createInteraction(selectionToken)
+	await search(interaction)
+
+	assert.equal(fetchCallCount, 1)
+	assert.deepEqual(replies, [
+		{
+			content: 'https://kentcdodds.com/blog/relative-search-result',
+		},
+	])
+})
+
 test('search forwards raw query text to searchAPI', async () => {
 	setSearchWorkerEnv()
 	const capturedBodies: Array<{ query: string; topK: number }> = []

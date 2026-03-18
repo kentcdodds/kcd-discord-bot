@@ -94,6 +94,56 @@ test('searchAPI sends authenticated POST requests and normalizes results', async
 	assert.equal(headers.get('content-type'), 'application/json')
 })
 
+test('searchAPI expands pathname results into full Kent URLs', async () => {
+	setSearchWorkerEnv()
+
+	global.fetch = (async () =>
+		new Response(
+			JSON.stringify({
+				ok: true,
+				results: [
+					{
+						type: 'blog',
+						title: 'Relative search result',
+						url: '/blog/relative-search-result',
+						snippet: 'Returned by the worker as a pathname.',
+					},
+					{
+						type: 'page',
+						title: 'Pathname-only search result',
+						pathname: '/about',
+						snippet: 'Returned by the worker without a full URL.',
+					},
+				],
+			}),
+			{ status: 200, headers: { 'Content-Type': 'application/json' } },
+		)) as typeof fetch
+
+	const response = await searchAPI('relative links')
+
+	assert.deepEqual(response, {
+		type: 'success',
+		results: [
+			{
+				segment: 'blog',
+				title: 'Relative search result',
+				url: 'https://kentcdodds.com/blog/relative-search-result',
+				summary: 'Returned by the worker as a pathname.',
+				imageUrl: undefined,
+				imageAlt: undefined,
+			},
+			{
+				segment: 'page',
+				title: 'Pathname-only search result',
+				url: 'https://kentcdodds.com/about',
+				summary: 'Returned by the worker without a full URL.',
+				imageUrl: undefined,
+				imageAlt: undefined,
+			},
+		],
+	})
+})
+
 test('searchAPI returns worker JSON errors', async () => {
 	setSearchWorkerEnv()
 
