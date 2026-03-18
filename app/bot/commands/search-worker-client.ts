@@ -21,6 +21,7 @@ type SearchWorkerErrorResponse = {
 	error: string
 }
 
+const kcdContentOrigin = 'https://kentcdodds.com'
 const defaultTopK = 20
 const maxTopK = 20
 const minTopK = 1
@@ -51,10 +52,26 @@ function getOptionalString(
 	return typeof value === 'string' && value.trim() ? value : undefined
 }
 
+function normalizeSearchResultUrl(record: SearchWorkerResult) {
+	const rawUrl =
+		getOptionalString(record, 'url') ?? getOptionalString(record, 'pathname')
+	if (!rawUrl) return null
+
+	try {
+		const url = rawUrl.startsWith('/')
+			? new URL(rawUrl, kcdContentOrigin)
+			: new URL(rawUrl)
+		if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+		return url.toString()
+	} catch {
+		return null
+	}
+}
+
 function normalizeSearchWorkerResult(
 	maybeResult: SearchWorkerResult,
 ): SearchResult | null {
-	const url = getOptionalString(maybeResult, 'url')
+	const url = normalizeSearchResultUrl(maybeResult)
 	const title = getOptionalString(maybeResult, 'title')
 	if (!url || !title) return null
 
