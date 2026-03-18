@@ -2,7 +2,7 @@ import * as Discord from 'discord.js'
 import type { CommandFn, AutocompleteFn } from './utils'
 import { info } from './info'
 import { kif, autocompleteKif } from './kif'
-import { search, autocompleteSearch } from './search'
+import { search } from './search'
 
 const commands: Record<string, CommandFn> = {
 	info,
@@ -12,7 +12,6 @@ const commands: Record<string, CommandFn> = {
 } as const
 const autocompletes: Record<string, AutocompleteFn> = {
 	kif: autocompleteKif,
-	search: autocompleteSearch,
 }
 
 async function help(

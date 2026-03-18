@@ -1,7 +1,7 @@
 import { invariant } from '~/utils'
 import { getMember } from '../utils/index'
 import { searchAPI } from './search-worker-client'
-import type { AutocompleteFn, CommandFn } from './utils'
+import type { CommandFn } from './utils'
 
 const segmentEmoji: Record<string, string> = {
 	// Search worker "type" categories returned by kentcdodds.com.
@@ -51,56 +51,6 @@ function getSafeHttpUrl(maybeUrl: string | undefined) {
 	return url.toString()
 }
 
-export const autocompleteSearch: AutocompleteFn = async interaction => {
-	const { guild } = interaction
-	invariant(guild, 'guild is required')
-	const input = interaction.options.getFocused(true)
-	if (input.name === 'query') {
-		const searchResponse = await searchAPI(input.value, {
-			topK: searchResultLimit,
-		})
-		const encodedQuery = encodeURIComponent(input.value)
-		const searchPage = `https://kentcdodds.com/s/${encodedQuery}`
-		if (searchResponse.type === 'error') {
-			await interaction.respond([
-				{ name: searchResponse.error, value: searchPage },
-			])
-			return
-		}
-
-		await interaction.respond(
-			searchResponse.results.slice(0, searchResultLimit).map(result => {
-				let { url } = result
-				const { title, segment } = result
-				const summary = result.summary ? collapseWhitespace(result.summary) : ''
-				if (url.length > 100) {
-					console.log('too long', { url })
-					// Try to shrink the URL by stripping search/hash. If it's still too
-					// long, fall back to a short query-ish value (this will still search).
-					const parsedUrl = getURL(url)
-					if (parsedUrl) {
-						parsedUrl.search = ''
-						parsedUrl.hash = ''
-						const shrunk = parsedUrl.toString()
-						if (shrunk.length <= 100) url = shrunk
-					}
-					if (url.length > 100) url = title.slice(0, 100)
-				}
-				const emoji = getSegmentEmoji(segment)
-				const baseName = `${emoji} ${title}`.trim()
-				const withSummary =
-					summary && baseName.length + 3 < 100
-						? `${baseName} - ${truncate(summary, 100 - baseName.length - 3)}`
-						: baseName
-				return {
-					name: truncate(withSummary, 100),
-					value: url,
-				}
-			}),
-		)
-	}
-}
-
 function getURL(maybeUrl: string) {
 	try {
 		return new URL(maybeUrl)
@@ -120,11 +70,6 @@ export const search: CommandFn = async interaction => {
 	const toUser = interaction.options.getUser('user')
 	const toMember = toUser ? getMember(guild, toUser.id) : null
 	const toMessage = toMember ? toMember.toString() : ''
-
-	const url = getURL(query)
-	if (url) {
-		return interaction.reply(`${toMessage} ${url}`.trim())
-	}
 
 	const searchResponse = await searchAPI(query, { topK: searchResultLimit })
 	if (searchResponse.type === 'error') {

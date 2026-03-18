@@ -42,8 +42,7 @@ const commands = [
 			option
 				.setName('query')
 				.setDescription('Your search query.')
-				.setRequired(true)
-				.setAutocomplete(true),
+				.setRequired(true),
 		)
 		.addUserOption(option =>
 			option
