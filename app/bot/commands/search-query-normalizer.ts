@@ -11,9 +11,13 @@ function collapseWhitespace(text: string) {
 	return text.replace(/\s+/g, ' ').trim()
 }
 
-function getURL(maybeUrl: string) {
+function getWebUrl(maybeUrl: string) {
+	if (/\s/.test(maybeUrl)) return null
+
 	try {
-		return new URL(maybeUrl)
+		const url = new URL(maybeUrl)
+		if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+		return url
 	} catch (error) {
 		// must not be a valid URL
 		return null
@@ -24,7 +28,7 @@ function getEmbeddedUrl(text: string) {
 	const match = text.match(embeddedUrlPattern)
 	if (!match) return null
 
-	const embeddedUrl = getURL(match[0])
+	const embeddedUrl = getWebUrl(match[0])
 	return embeddedUrl ? embeddedUrl.toString() : null
 }
 
@@ -32,7 +36,7 @@ export function normalizeSearchCommandQuery(
 	rawQuery: string,
 ): SearchCommandQuery {
 	const trimmedQuery = collapseWhitespace(rawQuery)
-	const directUrl = getURL(trimmedQuery)
+	const directUrl = getWebUrl(trimmedQuery)
 	if (directUrl) {
 		return { type: 'url', value: directUrl.toString() }
 	}
