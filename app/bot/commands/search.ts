@@ -1,5 +1,6 @@
 import { invariant } from '~/utils'
 import { getMember } from '../utils/index'
+import { normalizeSearchCommandQuery } from './search-query-normalizer'
 import { searchAPI } from './search-worker-client'
 import type { AutocompleteFn, CommandFn } from './utils'
 
@@ -114,18 +115,19 @@ export const search: CommandFn = async interaction => {
 	const { guild } = interaction
 	invariant(guild, 'guild is required')
 
-	const query = interaction.options.get('query')?.value
-	invariant(typeof query === 'string', 'query must be a string')
+	const rawQuery = interaction.options.get('query')?.value
+	invariant(typeof rawQuery === 'string', 'query must be a string')
 
 	const toUser = interaction.options.getUser('user')
 	const toMember = toUser ? getMember(guild, toUser.id) : null
 	const toMessage = toMember ? toMember.toString() : ''
 
-	const url = getURL(query)
-	if (url) {
-		return interaction.reply(`${toMessage} ${url}`.trim())
+	const normalizedQuery = normalizeSearchCommandQuery(rawQuery)
+	if (normalizedQuery.type === 'url') {
+		return interaction.reply(`${toMessage} ${normalizedQuery.value}`.trim())
 	}
 
+	const query = normalizedQuery.value
 	const searchResponse = await searchAPI(query, { topK: searchResultLimit })
 	if (searchResponse.type === 'error') {
 		return interaction.reply({
