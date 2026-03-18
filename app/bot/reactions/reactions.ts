@@ -368,11 +368,11 @@ async function spamBan(messageReaction: Discord.MessageReaction) {
 	}
 	const botsChannel = getTalkToBotsChannel(guild)
 
-	function log(...args: Parameters<Discord.TextBasedChannel['send']>) {
+	function log(message: string) {
 		if (botsChannel) {
-			return botsChannel.send(...args)
+			return botsChannel.send(message)
 		} else {
-			console.log(...args)
+			console.log(message)
 		}
 	}
 

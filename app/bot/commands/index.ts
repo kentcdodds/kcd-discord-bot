@@ -16,7 +16,7 @@ const autocompletes: Record<string, AutocompleteFn> = {
 }
 
 async function help(
-	interaction: Discord.CommandInteraction<Discord.CacheType>,
+	interaction: Discord.ChatInputCommandInteraction<Discord.CacheType>,
 ) {
 	return interaction.reply({
 		ephemeral: true,
@@ -43,7 +43,7 @@ help.description = 'Get help on how to use the bot'
 
 export function setup(client: Discord.Client) {
 	client.on('interactionCreate', async interaction => {
-		if (interaction.isCommand()) {
+		if (interaction.isChatInputCommand()) {
 			const { commandName } = interaction
 
 			const command = commands[commandName]

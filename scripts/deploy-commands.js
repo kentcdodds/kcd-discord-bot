@@ -1,7 +1,5 @@
 const path = require('path')
-const { SlashCommandBuilder } = require('@discordjs/builders')
-const { REST } = require('@discordjs/rest')
-const { Routes } = require('discord-api-types/v9')
+const { REST, Routes, SlashCommandBuilder } = require('discord.js')
 const dotenv = require('dotenv')
 
 dotenv.config({ path: path.join(__dirname, '../.env') })
@@ -53,7 +51,7 @@ const commands = [
 		),
 ].map(command => command.toJSON())
 
-const rest = new REST({ version: '9' }).setToken(DISCORD_BOT_TOKEN)
+const rest = new REST({ version: '10' }).setToken(DISCORD_BOT_TOKEN)
 
 rest
 	.put(Routes.applicationGuildCommands(DISCORD_APP_ID, KCD_GUILD_ID), {

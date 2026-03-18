@@ -126,7 +126,7 @@ _Replying to ${msg.author} <${getMessageLink(msg)}>_
 ${reply}
       `.trim(),
 		)
-		if (channel.isTextBased()) {
+		if (channel.isTextBased() && !channel.isDMBased()) {
 			return sendSelfDestructMessage(
 				channel,
 				`Hey ${msg.author}, I sent you a message here: ${getMessageLink(
@@ -146,7 +146,7 @@ const timeToMs = {
 }
 
 export async function sendSelfDestructMessage(
-	channel: Discord.TextBasedChannel,
+	channel: Discord.GuildTextBasedChannel,
 	messageContent: string,
 	{
 		time = 10,

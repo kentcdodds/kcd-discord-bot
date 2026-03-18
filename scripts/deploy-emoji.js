@@ -1,7 +1,6 @@
 const path = require('path')
 const fs = require('fs').promises
-const { REST } = require('@discordjs/rest')
-const { Routes } = require('discord-api-types/v9')
+const { REST, Routes } = require('discord.js')
 const dotenv = require('dotenv')
 
 dotenv.config({ path: path.join(__dirname, '../.env') })
@@ -11,7 +10,7 @@ const { DISCORD_BOT_TOKEN, KCD_GUILD_ID } = process.env
 invariant(DISCORD_BOT_TOKEN, 'DISCORD_BOT_TOKEN is required')
 invariant(KCD_GUILD_ID, 'KCD_GUILD_ID is required')
 
-const rest = new REST({ version: '9' }).setToken(DISCORD_BOT_TOKEN)
+const rest = new REST({ version: '10' }).setToken(DISCORD_BOT_TOKEN)
 
 const here = (...p) => path.join(__dirname, ...p)
 
