@@ -1,12 +1,32 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-const searchWorkerClient = require('./search-worker-client') as {
-	searchAPI: typeof import('./search-worker-client').searchAPI
-}
-const { search } = require('./search') as typeof import('./search')
+import { search } from './search'
 
-const originalSearchAPI = searchWorkerClient.searchAPI
+const originalFetch = global.fetch
+const originalSearchWorkerUrl = process.env.SEARCH_WORKER_URL
+const originalSearchWorkerToken = process.env.SEARCH_WORKER_TOKEN
+
+function restoreSearchWorkerEnv() {
+	const mutableEnv = process.env as Record<string, string | undefined>
+
+	if (originalSearchWorkerUrl == null) {
+		delete mutableEnv.SEARCH_WORKER_URL
+	} else {
+		process.env.SEARCH_WORKER_URL = originalSearchWorkerUrl
+	}
+
+	if (originalSearchWorkerToken == null) {
+		delete mutableEnv.SEARCH_WORKER_TOKEN
+	} else {
+		process.env.SEARCH_WORKER_TOKEN = originalSearchWorkerToken
+	}
+}
+
+function setSearchWorkerEnv() {
+	process.env.SEARCH_WORKER_URL = 'https://search.example.workers.dev'
+	process.env.SEARCH_WORKER_TOKEN = 'test-worker-token'
+}
 
 function createInteraction(query: string) {
 	const replies: Array<unknown> = []
@@ -29,20 +49,28 @@ function createInteraction(query: string) {
 
 	return {
 		replies,
-		interaction: interaction as Parameters<typeof search>[0],
+		interaction: interaction as unknown as Parameters<typeof search>[0],
 	}
 }
 
 test.afterEach(() => {
-	searchWorkerClient.searchAPI = originalSearchAPI
+	global.fetch = originalFetch
+	restoreSearchWorkerEnv()
 })
 
 test('search forwards raw query text to searchAPI', async () => {
-	const capturedCalls: Array<{ query: string; topK: number | undefined }> = []
-	searchWorkerClient.searchAPI = async (query, options) => {
-		capturedCalls.push({ query, topK: options?.topK })
-		return { type: 'success', results: [] }
-	}
+	setSearchWorkerEnv()
+	const capturedBodies: Array<{ query: string; topK: number }> = []
+	global.fetch = (async (_input, init) => {
+		capturedBodies.push(JSON.parse(String(init?.body)))
+		return new Response(
+			JSON.stringify({
+				ok: true,
+				results: [],
+			}),
+			{ status: 200, headers: { 'Content-Type': 'application/json' } },
+		)
+	}) as typeof fetch
 
 	const queries = [
 		'testing library hooks',
@@ -55,7 +83,7 @@ test('search forwards raw query text to searchAPI', async () => {
 		await search(interaction)
 	}
 
-	assert.deepEqual(capturedCalls, [
+	assert.deepEqual(capturedBodies, [
 		{ query: 'testing library hooks', topK: 20 },
 		{ query: 'react-testing-library', topK: 20 },
 		{ query: 'https://kentcdodds.com/blog/testing', topK: 20 },
@@ -63,17 +91,25 @@ test('search forwards raw query text to searchAPI', async () => {
 })
 
 test('search does not use a URL fast path for query text', async () => {
+	setSearchWorkerEnv()
 	const query = 'https://kentcdodds.com/blog/testing'
-	let capturedQuery: string | undefined
-	searchWorkerClient.searchAPI = async receivedQuery => {
-		capturedQuery = receivedQuery
-		return { type: 'success', results: [] }
-	}
+	let fetchCallCount = 0
+	global.fetch = (async (_input, init) => {
+		fetchCallCount += 1
+		assert.deepEqual(JSON.parse(String(init?.body)), { query, topK: 20 })
+		return new Response(
+			JSON.stringify({
+				ok: true,
+				results: [],
+			}),
+			{ status: 200, headers: { 'Content-Type': 'application/json' } },
+		)
+	}) as typeof fetch
 
 	const { interaction, replies } = createInteraction(query)
 	await search(interaction)
 
-	assert.equal(capturedQuery, query)
+	assert.equal(fetchCallCount, 1)
 	assert.deepEqual(replies, [
 		{
 			ephemeral: true,
