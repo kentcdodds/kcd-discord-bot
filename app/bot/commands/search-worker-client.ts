@@ -58,6 +58,7 @@ function normalizeSearchResultUrl(record: SearchWorkerResult) {
 	if (!rawUrl) return null
 
 	try {
+		if (rawUrl.startsWith('//')) return null
 		const url = rawUrl.startsWith('/')
 			? new URL(rawUrl, kcdContentOrigin)
 			: new URL(rawUrl)
