@@ -129,12 +129,16 @@ test('searchAPI expands pathname results into full Kent URLs', async () => {
 				title: 'Relative search result',
 				url: 'https://kentcdodds.com/blog/relative-search-result',
 				summary: 'Returned by the worker as a pathname.',
+				imageUrl: undefined,
+				imageAlt: undefined,
 			},
 			{
 				segment: 'page',
 				title: 'Pathname-only search result',
 				url: 'https://kentcdodds.com/about',
 				summary: 'Returned by the worker without a full URL.',
+				imageUrl: undefined,
+				imageAlt: undefined,
 			},
 		],
 	})
