@@ -147,7 +147,7 @@ export const search: CommandFn = async interaction => {
 	const toMember = toUser ? getMember(guild, toUser.id) : null
 	const toMessage = toMember ? toMember.toString() : ''
 
-	if (query.startsWith(searchSelectionPrefix)) {
+	if (query.startsWith(`${searchSelectionPrefix}${interaction.user.id}:`)) {
 		const selectedUrl = consumeSearchSelectionToken(query, interaction.user.id)
 		if (!selectedUrl) {
 			return interaction.reply({
