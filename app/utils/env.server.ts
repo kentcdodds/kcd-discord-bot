@@ -8,6 +8,8 @@ declare global {
 			KCD_GUILD_ID: string
 			DISCORD_APP_ID: string
 			DISCORD_CLIENT_SECRET: string
+			SEARCH_WORKER_URL: string
+			SEARCH_WORKER_TOKEN: string
 
 			CHANNEL_ID_BOT_LOGS: string
 			CHANNEL_ID_TALK_TO_BOTS: string
@@ -50,6 +52,8 @@ export function init() {
 		'KCD_GUILD_ID',
 		'DISCORD_APP_ID',
 		'DISCORD_CLIENT_SECRET',
+		'SEARCH_WORKER_URL',
+		'SEARCH_WORKER_TOKEN',
 
 		'CHANNEL_ID_BOT_LOGS',
 		'CHANNEL_ID_TALK_TO_BOTS',
