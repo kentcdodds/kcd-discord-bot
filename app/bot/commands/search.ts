@@ -58,11 +58,12 @@ export const autocompleteSearch: AutocompleteFn = async interaction => {
 	if (input.name !== 'query') return
 
 	const query = input.value
+	const queryValue = query.length > 100 ? query.slice(0, 100) : query
 	const searchResponse = await searchAPI(query, {
 		topK: searchResultLimit,
 	})
 	if (searchResponse.type === 'error') {
-		await interaction.respond([{ name: searchResponse.error, value: query }])
+		await interaction.respond([{ name: searchResponse.error, value: queryValue }])
 		return
 	}
 
@@ -78,7 +79,7 @@ export const autocompleteSearch: AutocompleteFn = async interaction => {
 					: baseName
 			return {
 				name: truncate(withSummary, 100),
-				value: query,
+				value: queryValue,
 			}
 		}),
 	)
