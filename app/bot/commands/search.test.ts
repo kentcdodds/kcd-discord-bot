@@ -117,7 +117,7 @@ test('search autocomplete returns per-result selection tokens', async () => {
 	const { interaction, responses } = createAutocompleteInteraction(query)
 	await autocompleteSearch(interaction)
 
-	assert.deepEqual(capturedBodies, [{ query, topK: 20 }])
+	assert.deepEqual(capturedBodies, [{ query, topK: 7 }])
 	assert.equal(responses.length, 1)
 	const [choices] = responses as [
 		Array<{ name: string; value: string }>,
@@ -142,7 +142,7 @@ test('search returns the selected autocomplete result URL without rerunning sear
 		fetchCallCount += 1
 		assert.deepEqual(parseSearchRequestBody(init), {
 			query: 'react-testing-library',
-			topK: 20,
+			topK: 7,
 		})
 		return new Response(
 			JSON.stringify({
@@ -184,7 +184,7 @@ test('search returns the selected autocomplete result as a full URL when worker 
 		fetchCallCount += 1
 		assert.deepEqual(parseSearchRequestBody(init), {
 			query: 'relative-search-result',
-			topK: 20,
+			topK: 7,
 		})
 		return new Response(
 			JSON.stringify({
@@ -245,9 +245,9 @@ test('search forwards raw query text to searchAPI', async () => {
 	}
 
 	assert.deepEqual(capturedBodies, [
-		{ query: 'testing library hooks', topK: 20 },
-		{ query: 'react-testing-library', topK: 20 },
-		{ query: 'https://kentcdodds.com/blog/testing', topK: 20 },
+		{ query: 'testing library hooks', topK: 7 },
+		{ query: 'react-testing-library', topK: 7 },
+		{ query: 'https://kentcdodds.com/blog/testing', topK: 7 },
 	])
 })
 
@@ -257,7 +257,7 @@ test('search does not use a URL fast path for query text', async () => {
 	let fetchCallCount = 0
 	global.fetch = (async (_input, init) => {
 		fetchCallCount += 1
-		assert.deepEqual(parseSearchRequestBody(init), { query, topK: 20 })
+		assert.deepEqual(parseSearchRequestBody(init), { query, topK: 7 })
 		return new Response(
 			JSON.stringify({
 				ok: true,
@@ -275,6 +275,38 @@ test('search does not use a URL fast path for query text', async () => {
 		{
 			ephemeral: true,
 			content: `I couldn't find any results for: "${query}"`,
+		},
+	])
+})
+
+test('search uses no-close-matches copy when the worker returns noCloseMatches', async () => {
+	setSearchWorkerEnv()
+	const query = 'something vague'
+	global.fetch = (async () =>
+		new Response(
+			JSON.stringify({
+				ok: true,
+				results: [],
+				noCloseMatches: true,
+				lowRankingResults: [
+					{
+						type: 'blog',
+						title: 'Low confidence',
+						url: 'https://kentcdodds.com/blog/low',
+					},
+				],
+			}),
+			{ status: 200, headers: { 'Content-Type': 'application/json' } },
+		)) as typeof fetch
+
+	const { interaction, replies } = createInteraction(query)
+	await search(interaction)
+
+	assert.deepEqual(replies, [
+		{
+			ephemeral: true,
+			content:
+				'Nothing confident enough for that query—try different keywords.',
 		},
 	])
 })

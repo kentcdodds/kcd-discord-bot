@@ -14,6 +14,10 @@ type SearchWorkerResult = Record<string, unknown>
 type SearchWorkerSuccessResponse = {
 	ok: true
 	results: Array<SearchWorkerResult>
+	/** Present on newer workers; ignored for Discord (optional “show more” UIs only). */
+	lowRankingResults?: Array<SearchWorkerResult>
+	/** True when fused candidates existed but none passed the confidence gate. */
+	noCloseMatches?: boolean
 }
 
 type SearchWorkerErrorResponse = {
@@ -22,8 +26,8 @@ type SearchWorkerErrorResponse = {
 }
 
 const kcdContentOrigin = 'https://kentcdodds.com'
-const defaultTopK = 20
-const maxTopK = 20
+const defaultTopK = 7
+const maxTopK = 7
 const minTopK = 1
 const defaultTimeoutMs = 10_000
 const maxQueryLength = 1000
@@ -124,10 +128,12 @@ export async function searchAPI(
 	query: string,
 	options?: { topK?: number; timeoutMs?: number },
 ): Promise<
-	| { type: 'success'; results: Array<SearchResult> }
+	| { type: 'success'; results: Array<SearchResult>; noCloseMatches: boolean }
 	| { type: 'error'; error: string }
 > {
-	if (!query) return { type: 'success', results: [] }
+	if (!query) {
+		return { type: 'success', results: [], noCloseMatches: false }
+	}
 	if (query.length > maxQueryLength) {
 		return {
 			type: 'error',
@@ -184,8 +190,11 @@ export async function searchAPI(
 				}
 			}
 
+			const noCloseMatches = body.noCloseMatches === true
+
 			return {
 				type: 'success',
+				noCloseMatches,
 				results: body.results
 					.map(result => normalizeSearchWorkerResult(result))
 					.filter((result): result is SearchResult => result != null),

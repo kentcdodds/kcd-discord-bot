@@ -31,7 +31,7 @@ const discordEmbedLimits = {
 	fieldValue: 1024,
 } as const
 
-const searchResultLimit = 20 as const
+const searchResultLimit = 7 as const
 const searchSelectionPrefix = 'search-selection:'
 const searchSelectionTtlMs = 5 * 60 * 1000
 
@@ -169,7 +169,7 @@ export const search: CommandFn = async interaction => {
 		})
 	}
 
-	const results = searchResponse.results
+	const { results, noCloseMatches } = searchResponse
 	if (results.length === 1 && results[0]) {
 		const result = results[0]
 		const safeThumbnailUrl = getSafeHttpUrl(result.imageUrl)
@@ -198,7 +198,7 @@ export const search: CommandFn = async interaction => {
 	if (results.length > 1) {
 		const encodedQuery = encodeURIComponent(query)
 		const searchPage = `https://kentcdodds.com/s/${encodedQuery}`
-		const topResults = results.slice(0, 5)
+		const topResults = results.slice(0, searchResultLimit)
 		const safeThumbnailUrl = getSafeHttpUrl(topResults[0]?.imageUrl)
 
 		const normalizedQuery = truncate(
@@ -253,7 +253,7 @@ export const search: CommandFn = async interaction => {
 			fields.push({ name, value })
 			usedChars += name.length + value.length
 
-			// Top 3–5 results requirement: we try up to 5; stop early if we're out of budget.
+			// Up to searchResultLimit fields; stop early if we're out of embed budget.
 			if (usedChars >= discordEmbedLimits.total) break
 		}
 
@@ -277,9 +277,13 @@ export const search: CommandFn = async interaction => {
 		})
 	}
 
+	const emptyMessage = noCloseMatches
+		? 'Nothing confident enough for that query—try different keywords.'
+		: `I couldn't find any results for: "${query}"`
+
 	await interaction.reply({
 		ephemeral: true,
-		content: `I couldn't find any results for: "${query}"`,
+		content: emptyMessage,
 	})
 }
 search.description = `Search Kent's content`

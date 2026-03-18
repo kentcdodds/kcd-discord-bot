@@ -66,6 +66,7 @@ test('searchAPI sends authenticated POST requests and normalizes results', async
 
 	assert.deepEqual(response, {
 		type: 'success',
+		noCloseMatches: false,
 		results: [
 			{
 				segment: 'blog',
@@ -123,6 +124,7 @@ test('searchAPI expands pathname results into full Kent URLs', async () => {
 
 	assert.deepEqual(response, {
 		type: 'success',
+		noCloseMatches: false,
 		results: [
 			{
 				segment: 'blog',
@@ -141,6 +143,36 @@ test('searchAPI expands pathname results into full Kent URLs', async () => {
 				imageAlt: undefined,
 			},
 		],
+	})
+})
+
+test('searchAPI sets noCloseMatches and ignores lowRankingResults for results list', async () => {
+	setSearchWorkerEnv()
+
+	global.fetch = (async () =>
+		new Response(
+			JSON.stringify({
+				ok: true,
+				results: [],
+				noCloseMatches: true,
+				lowRankingResults: [
+					{
+						type: 'blog',
+						title: 'Weak hit',
+						url: 'https://kentcdodds.com/blog/weak',
+						snippet: 'Should not appear in results.',
+					},
+				],
+			}),
+			{ status: 200, headers: { 'Content-Type': 'application/json' } },
+		)) as typeof fetch
+
+	const response = await searchAPI('vague')
+
+	assert.deepEqual(response, {
+		type: 'success',
+		noCloseMatches: true,
+		results: [],
 	})
 })
 
