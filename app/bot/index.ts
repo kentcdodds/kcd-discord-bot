@@ -59,7 +59,7 @@ export async function start() {
 							`date: ${commitInfo.date}`,
 							`message: ${commitInfo.message}`,
 							`link: <${commitInfo.link}>`,
-					  ].join('\n')
+						].join('\n')
 					: null
 				return {
 					title: '🤖 BOT Started',

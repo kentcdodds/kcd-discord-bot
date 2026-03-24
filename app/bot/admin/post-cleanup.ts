@@ -32,13 +32,12 @@ function parseScheduledDeletion(embed: Discord.Embed) {
 	}
 	const deleteAt = new Date(isoTimestamp)
 	if (Number.isNaN(deleteAt.getTime())) return null
-	const parsed: ScheduledDeletion = {
+	return {
 		type,
 		channelId,
 		messageId,
 		deleteAt,
-	}
-	return parsed
+	} satisfies ScheduledDeletion
 }
 
 async function deleteTargetMessage(

@@ -1,0 +1,31 @@
+{
+	"$schema": "./node_modules/oxfmt/configuration_schema.json",
+	"arrowParens": "avoid",
+	"bracketSameLine": false,
+	"bracketSpacing": true,
+	"embeddedLanguageFormatting": "auto",
+	"endOfLine": "lf",
+	"htmlWhitespaceSensitivity": "css",
+	"ignorePatterns": [
+		"node_modules",
+		"build",
+		"public/build",
+		".env",
+		"app/styles/tailwind.css",
+		"bot/dist"
+	],
+	"jsxSingleQuote": false,
+	"printWidth": 80,
+	"proseWrap": "always",
+	"quoteProps": "as-needed",
+	"semi": false,
+	"singleAttributePerLine": false,
+	"singleQuote": true,
+	"sortPackageJson": false,
+	"sortTailwindcss": {
+		"config": "tailwind.config.js"
+	},
+	"tabWidth": 2,
+	"trailingComma": "all",
+	"useTabs": true
+}

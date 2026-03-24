@@ -116,7 +116,7 @@ async function getThreadData({
 								fetchAll: true,
 								type: 'public',
 							},
-					  })
+						})
 					: null
 			const allThreads = new Map([
 				...fetchedThreads.threads.entries(),

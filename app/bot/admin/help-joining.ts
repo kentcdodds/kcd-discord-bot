@@ -100,7 +100,7 @@ async function handleHelpJoiningMessage(
 						name: 'Attachments',
 						value: attachmentsSummary.slice(0, 1024),
 						inline: false,
-				  }
+					}
 				: null,
 		].filter(Boolean),
 	}))

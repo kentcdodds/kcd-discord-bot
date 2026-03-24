@@ -18,7 +18,7 @@ export const info: CommandFn = async interaction => {
 								{ name: 'Commit Date', value: commitInfo.date },
 								{ name: 'Commit Message', value: commitInfo.message },
 								{ name: 'Commit Link', value: commitInfo.link },
-						  ]
+							]
 						: [{ name: 'Commit Info', value: 'Unavailable' }]),
 					{ name: 'Started at', value: getStartTimeInfo() },
 					{ name: 'Built at', value: getBuildTimeInfo() },

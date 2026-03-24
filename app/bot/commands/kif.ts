@@ -61,7 +61,7 @@ async function getKifInfo(guild: Discord.Guild, { force = false } = {}) {
 			},
 		)) as Record<string, KifData>
 	const kifKeysWithoutEmoji = []
-	const kifMap: typeof kifCache['kifMap'] = {}
+	const kifMap: (typeof kifCache)['kifMap'] = {}
 	for (const kifKey of Object.keys(kifs)) {
 		const { gif, aliases = [], emojiAliases = [] } = kifs[kifKey] ?? {}
 		if (!gif) continue
@@ -190,7 +190,7 @@ const handleKifCommand: CommandFn = async interaction => {
 		? `Did you mean ${listify(closeMatches, {
 				type: 'disjunction',
 				stringify: JSON.stringify,
-		  })}?`
+			})}?`
 		: ''
 	await interaction.reply({
 		ephemeral: true,
