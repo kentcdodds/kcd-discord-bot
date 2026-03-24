@@ -29,6 +29,7 @@ async function dedupeMessages(message: TDiscord.Message) {
 	) as Array<TDiscord.TextBasedChannel>
 
 	function msgFilter(msg: TDiscord.Message) {
+		if (!msg.author) return false
 		return (
 			msg.id !== message.id && // not the EXACT same message
 			msg.author.id !== msg.client.user?.id && // not from the bot
