@@ -32,12 +32,13 @@ function parseScheduledDeletion(embed: Discord.Embed) {
 	}
 	const deleteAt = new Date(isoTimestamp)
 	if (Number.isNaN(deleteAt.getTime())) return null
-	return {
+	const parsed: ScheduledDeletion = {
 		type,
 		channelId,
 		messageId,
 		deleteAt,
-	} satisfies ScheduledDeletion
+	}
+	return parsed
 }
 
 async function deleteTargetMessage(
@@ -174,4 +175,3 @@ async function cleanupGuild(guild: Discord.Guild) {
 export async function setup(client: Discord.Client) {
 	void cleanupGuildOnInterval(client, guild => cleanupGuild(guild), INTERVAL_MS)
 }
-

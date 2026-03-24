@@ -77,7 +77,9 @@ function createAutocompleteInteraction(query: string, userId = 'user-1') {
 
 	return {
 		responses,
-		interaction: interaction as unknown as Parameters<typeof autocompleteSearch>[0],
+		interaction: interaction as unknown as Parameters<
+			typeof autocompleteSearch
+		>[0],
 	}
 }
 
@@ -119,9 +121,7 @@ test('search autocomplete returns per-result selection tokens', async () => {
 
 	assert.deepEqual(capturedBodies, [{ query, topK: 7 }])
 	assert.equal(responses.length, 1)
-	const [choices] = responses as [
-		Array<{ name: string; value: string }>,
-	]
+	const [choices] = responses as [Array<{ name: string; value: string }>]
 	assert.deepEqual(
 		choices.map(choice => choice.name),
 		[

@@ -66,8 +66,8 @@ export async function validateUserPurchase({
 
 	const validPurchaseStatuses = ['Valid', 'Restricted']
 
-	const validPurchases = userInfoResult.data.purchases.filter((p) => 
-		validPurchaseStatuses.includes(p.status)
+	const validPurchases = userInfoResult.data.purchases.filter(p =>
+		validPurchaseStatuses.includes(p.status),
 	)
 
 	const hasEpicWebPurchase = validPurchases.some(p =>

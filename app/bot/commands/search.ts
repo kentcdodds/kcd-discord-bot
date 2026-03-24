@@ -72,7 +72,9 @@ function createSearchSelectionToken(userId: string, url: string) {
 	const now = Date.now()
 	pruneExpiredSearchSelections(now)
 
-	const token = `${searchSelectionPrefix}${userId}:${now.toString(36)}:${searchSelectionSequence.toString(36)}`
+	const token = `${searchSelectionPrefix}${userId}:${now.toString(
+		36,
+	)}:${searchSelectionSequence.toString(36)}`
 	searchSelectionSequence += 1
 	searchSelectionCache.set(token, {
 		userId,
@@ -105,7 +107,9 @@ export const autocompleteSearch: AutocompleteFn = async interaction => {
 		topK: searchResultLimit,
 	})
 	if (searchResponse.type === 'error') {
-		await interaction.respond([{ name: searchResponse.error, value: queryValue }])
+		await interaction.respond([
+			{ name: searchResponse.error, value: queryValue },
+		])
 		return
 	}
 
