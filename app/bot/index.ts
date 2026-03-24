@@ -29,6 +29,18 @@ export async function start() {
 		],
 	}))
 
+	client.on('error', error => {
+		Sentry.captureException(error, { tags: { 'discord.source': 'client' } })
+	})
+
+	client.on('shardError', (error, shardId) => {
+		Sentry.withScope(scope => {
+			scope.setTag('discord.source', 'shard')
+			scope.setExtra('shardId', shardId)
+			Sentry.captureException(error)
+		})
+	})
+
 	client.on('ready', async () => {
 		// setup all parts of the bot here
 		commands.setup(client)
