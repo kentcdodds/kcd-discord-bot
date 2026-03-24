@@ -12,7 +12,7 @@ async function cleanup(guild: TDiscord.Guild) {
 
 	for (const channel of channels) {
 		for (const message of [...channel.messages.cache.values()]) {
-			if (message.author.id === botId) {
+			if (message.author?.id === botId) {
 				const timeToSelfDestruct = getSelfDestructTime(message.content)
 				if (
 					typeof timeToSelfDestruct === 'number' &&
