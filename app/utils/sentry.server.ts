@@ -9,6 +9,8 @@ export async function init() {
 			dsn: process.env.SENTRY_DSN,
 			tracesSampleRate: 0.3,
 			environment: process.env.NODE_ENV,
+			// Give the transport time to flush before process exit on uncaught errors
+			shutdownTimeout: 5000,
 			...(commit ? { release: commit } : {}),
 		})
 		Sentry.setContext('fly', {
