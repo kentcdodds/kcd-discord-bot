@@ -1,9 +1,37 @@
-# Epic Web Discord Bot
+# Kody Discord Gateway Proxy
 
-This is the Epic Web Discord Bot. It's hosted on fly. It runs alongside an
-actual Remix app (Indie Stack) which we may use to have some kind of UI for
-controlling the bot and stuff. Who knows. It was just nice to do this so we'll
-have a persistence layer if we decide we need that.
+This Fly app runs one stable external Discord Gateway websocket for Kody. It
+receives Discord `MESSAGE_CREATE` gateway dispatches, normalizes them, and calls
+Kody's package invocation API so Kody packages can handle replies and traces.
+
+The Fly app name remains `kcd-discord-bot-v2`.
+
+## Runtime environment
+
+Required:
+
+- `DISCORD_BOT_TOKEN`: Discord bot token for the external gateway process.
+- `KODY_PACKAGE_INVOCATION_TOKEN`: scoped Kody package invocation bearer token.
+
+Optional:
+
+- `KODY_BASE_URL`: defaults to `https://heykody.dev`.
+- `DISCORD_INTENTS`: defaults to `33281`
+  (`Guilds,GuildMessages,MessageContent`). This may be a numeric bitfield or a
+  comma-separated list of supported intent names.
+- `DISCORD_GATEWAY_VERSION`: defaults to `10`.
+
+Set secrets on Fly without printing token values:
+
+```sh
+fly secrets set --app kcd-discord-bot-v2 DISCORD_BOT_TOKEN=...
+fly secrets set --app kcd-discord-bot-v2 KODY_PACKAGE_INVOCATION_TOKEN=...
+```
+
+The proxy uses discord.js to own the normal Discord Gateway lifecycle
+(identify, heartbeat, resume, invalid session handling, and Discord-requested
+reconnects). It does not use Kody package services and does not run a proactive
+reconnect watchdog.
 
 ## Development
 
@@ -20,8 +48,8 @@ then follow
 to create a bot application and
 [add it to your server](https://discordjs.guide/preparations/adding-your-bot-to-servers.html).
 
-Once you have that, then copy the `.env.example` to `.env` and put in values for
-everything (you'll need to create channels for several of them).
+Once you have that, then copy the `.env.example` to `.env` and set the required
+gateway proxy values.
 
 Next run:
 

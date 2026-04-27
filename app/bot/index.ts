@@ -1,32 +1,21 @@
 import * as Discord from 'discord.js'
 import * as Sentry from '@sentry/node'
-import * as commands from './commands'
-import * as reactions from './reactions'
-import * as admin from './admin'
 import {
-	botLog,
-	getBuildTimeInfo,
-	getCommitInfo,
-	fetchEpicWebGuild,
-	getStartTimeInfo,
-	typedBoolean,
-} from './utils'
+	getKodyInvocationConfigFromEnv,
+	invokeKodyMessageCreated,
+	normalizeMessageCreate,
+	parseDiscordIntents,
+} from './gateway-proxy'
 
 export const ref: {
 	client?: Discord.Client
 } = {}
 
 export async function start() {
+	const kodyInvocationConfig = getKodyInvocationConfigFromEnv()
 	const client = (ref.client = new Discord.Client({
-		intents: [
-			Discord.GatewayIntentBits.Guilds,
-			Discord.GatewayIntentBits.MessageContent,
-			Discord.GatewayIntentBits.GuildMembers,
-			Discord.GatewayIntentBits.GuildMessages,
-			Discord.GatewayIntentBits.GuildMessageReactions,
-			Discord.GatewayIntentBits.GuildEmojisAndStickers,
-			Discord.GatewayIntentBits.GuildScheduledEvents,
-		],
+		intents: parseDiscordIntents(),
+		ws: { version: Number(process.env.DISCORD_GATEWAY_VERSION || '10') },
 	}))
 
 	client.on('error', error => {
@@ -41,41 +30,44 @@ export async function start() {
 		})
 	})
 
-	client.on('ready', async () => {
-		// setup all parts of the bot here
-		commands.setup(client)
-		reactions.setup(client)
-		admin.setup(client)
+	client.once('ready', () => {
+		logGatewayProxy('ready', {
+			userId: client.user?.id,
+			intents: parseDiscordIntents(),
+			gatewayVersion: process.env.DISCORD_GATEWAY_VERSION || '10',
+		})
+	})
 
-		await primeTheCache(client)
+	client.ws.on(Discord.GatewayDispatchEvents.MessageCreate, async message => {
+		const event = normalizeMessageCreate(message)
 
-		const guild = await fetchEpicWebGuild(client)
-		if (guild && process.env.NODE_ENV === 'production') {
-			void botLog(guild, () => {
-				const commitInfo = getCommitInfo()
-				const commitValue = commitInfo
-					? [
-							`author: ${commitInfo.author}`,
-							`date: ${commitInfo.date}`,
-							`message: ${commitInfo.message}`,
-							`link: <${commitInfo.link}>`,
-						].join('\n')
-					: null
-				return {
-					title: '🤖 BOT Started',
-					color: Discord.Colors.Green,
-					description: `Logged in and ready to go. Here's some info on the running bot:`,
-					fields: [
-						{ name: 'Startup', value: getStartTimeInfo(), inline: true },
-						{ name: 'Built', value: getBuildTimeInfo(), inline: true },
-						commitValue ? { name: 'Commit', value: commitValue } : null,
-					].filter(typedBoolean),
-				}
+		try {
+			const result = await invokeKodyMessageCreated(event, kodyInvocationConfig)
+			logGatewayProxy('message dispatched', {
+				messageId: event.messageId,
+				channelId: event.channelId,
+				guildId: event.guildId,
+				status: result.status,
+			})
+		} catch (error) {
+			Sentry.captureException(error, {
+				tags: {
+					'discord.source': 'kody-invocation',
+					'discord.event': 'MESSAGE_CREATE',
+				},
+				extra: { messageId: event.messageId },
+			})
+			logGatewayProxy('message dispatch failed', {
+				messageId: event.messageId,
+				error: String(error),
 			})
 		}
 	})
 
-	void client.login(process.env.DISCORD_BOT_TOKEN)
+	void client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
+		Sentry.captureException(error, { tags: { 'discord.source': 'login' } })
+		logGatewayProxy('login failed', { error: String(error) })
+	})
 
 	return async function cleanup() {
 		Sentry.captureMessage('Client logging out')
@@ -83,26 +75,13 @@ export async function start() {
 	}
 }
 
-async function primeTheCache(client: Discord.Client) {
-	const guildPartials = await client.guilds.fetch()
-	await Promise.all(
-		guildPartials.mapValues(async guildPartial => {
-			const guild = await guildPartial.fetch()
-			const channelPartials = await guild.channels.fetch()
-			return Promise.all(
-				channelPartials.mapValues(async channelPartial => {
-					if (channelPartial?.isTextBased()) {
-						const channel = await channelPartial.fetch()
-						await channel.messages.fetch({ limit: 30 })
-						if (channel.type === Discord.ChannelType.GuildText) {
-							const results = await channel.threads.fetch()
-							for (const [, thread] of results.threads) {
-								await thread.messages.fetch({ limit: 30 })
-							}
-						}
-					}
-				}),
-			)
+function logGatewayProxy(message: string, data?: Record<string, unknown>) {
+	console.log(
+		JSON.stringify({
+			at: new Date().toISOString(),
+			source: 'discord-gateway-proxy',
+			message,
+			...(data ? { data } : null),
 		}),
 	)
 }
