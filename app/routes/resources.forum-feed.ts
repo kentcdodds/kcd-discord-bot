@@ -7,6 +7,7 @@ import { fetchEpicWebGuild } from '~/bot/utils'
 import { LRUCache } from 'lru-cache'
 import type { CacheEntry } from 'cachified'
 import { cachified, lruCacheAdapter } from 'cachified'
+import { isTransientDiscordHttpError } from '~/utils/discord-transient-errors'
 import { invariantResponse } from '../utils.js'
 
 const lru = new LRUCache<string, CacheEntry>({ max: 100 })
@@ -79,13 +80,34 @@ export async function loader({ request }: DataFunctionArgs) {
 		)
 	}
 
-	const threadData = await getThreadData({
-		guild,
-		channel,
-		tagIds: reqUrl.searchParams.getAll('tagId'),
-		forceFresh: reqUrl.searchParams.has('fresh'),
-	})
-	return json({ status: 'success', threadData } as const)
+	try {
+		const threadData = await getThreadData({
+			guild,
+			channel,
+			tagIds: reqUrl.searchParams.getAll('tagId'),
+			forceFresh: reqUrl.searchParams.has('fresh'),
+		})
+		return json({ status: 'success', threadData } as const)
+	} catch (error) {
+		// Discord REST already retries 5xx; when it still 503s, cachified keeps
+		// serving SWR stale data for background refresh failures. A cold/forced
+		// refresh that fails should return a controlled error instead of an
+		// unhandled rejection (KCD-DISCORD-BOT-2S / 2R).
+		if (isTransientDiscordHttpError(error)) {
+			console.warn(
+				'Discord temporarily unavailable while loading forum feed',
+				error,
+			)
+			return json(
+				{
+					status: 'error',
+					error: 'Discord temporarily unavailable',
+				} as const,
+				{ status: 503 },
+			)
+		}
+		throw error
+	}
 }
 
 async function getThreadData({
