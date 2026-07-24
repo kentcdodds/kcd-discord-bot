@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/node'
 import * as commands from './commands'
 import * as reactions from './reactions'
 import * as admin from './admin'
+import { isTransientDiscordGatewayError } from '~/utils/discord-transient-errors'
 import {
 	botLog,
 	getBuildTimeInfo,
@@ -30,10 +31,22 @@ export async function start() {
 	}))
 
 	client.on('error', error => {
+		// Gateway handshake timeouts / 503s are recovered by discord.js reconnect.
+		if (isTransientDiscordGatewayError(error)) {
+			console.warn('Transient Discord client error (reconnect expected):', error)
+			return
+		}
 		Sentry.captureException(error, { tags: { 'discord.source': 'client' } })
 	})
 
 	client.on('shardError', (error, shardId) => {
+		if (isTransientDiscordGatewayError(error)) {
+			console.warn(
+				`Transient Discord shard error on shard ${shardId} (reconnect expected):`,
+				error,
+			)
+			return
+		}
 		Sentry.withScope(scope => {
 			scope.setTag('discord.source', 'shard')
 			scope.setExtra('shardId', shardId)

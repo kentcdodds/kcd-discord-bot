@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node'
 import { invariant } from '~/utils'
+import { shouldDropTransientDiscordSentryEvent } from './discord-transient-errors'
 
 export async function init() {
 	if (process.env.NODE_ENV === 'production') {
@@ -11,6 +12,18 @@ export async function init() {
 			environment: process.env.NODE_ENV,
 			// Give the transport time to flush before process exit on uncaught errors
 			shutdownTimeout: 5000,
+			// Discord.js reconnects after these; don't page on gateway blips.
+			ignoreErrors: [
+				'Opening handshake has timed out',
+				'Unexpected server response: 503',
+				'Unexpected server response: 502',
+			],
+			beforeSend(event, hint) {
+				if (shouldDropTransientDiscordSentryEvent(event, hint)) {
+					return null
+				}
+				return event
+			},
 			...(commit ? { release: commit } : {}),
 		})
 		Sentry.setContext('fly', {
