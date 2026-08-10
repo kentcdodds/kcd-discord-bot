@@ -1,5 +1,6 @@
 import * as Discord from 'discord.js'
 import { getMemberTeam, isMember } from '../utils/roles'
+import { createPrivateOrPublicThread } from '../utils/threads'
 import {
 	botLog,
 	getBotLogChannel,
@@ -156,15 +157,7 @@ async function ensureMemberWelcomeThread(
 	}
 	if (thread) return thread
 
-	const canMakePrivateThreads = [
-		Discord.GuildPremiumTier.Tier2,
-		Discord.GuildPremiumTier.Tier3,
-	].includes(member.guild.premiumTier)
-
-	const newThread = await introductionsChannel.threads.create({
-		type: canMakePrivateThreads
-			? Discord.ChannelType.GuildPrivateThread
-			: Discord.ChannelType.GuildPublicThread,
+	const newThread = await createPrivateOrPublicThread(introductionsChannel, {
 		autoArchiveDuration: Discord.ThreadAutoArchiveDuration.OneHour,
 		name: threadName,
 		reason: `${member.user.username} joined the server`,

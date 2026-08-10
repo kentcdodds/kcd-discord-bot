@@ -1,5 +1,6 @@
 import * as Discord from 'discord.js'
 import { isModerator } from '../utils/roles'
+import { createPrivateOrPublicThread } from '../utils/threads'
 import {
 	botLog,
 	getErrorMessage,
@@ -115,7 +116,7 @@ async function ensureMemberHelpThread(
 	await channel.threads.fetchArchived({ type: 'public' }).catch(() => {})
 
 	const threadName = `Help ${member.user.username}`
-	let thread = channel.threads.cache.find(
+	let thread: Discord.ThreadChannel | undefined = channel.threads.cache.find(
 		currentThread =>
 			currentThread.name === threadName &&
 			[
@@ -125,17 +126,9 @@ async function ensureMemberHelpThread(
 	)
 
 	if (!thread) {
-		const canMakePrivateThreads = [
-			Discord.GuildPremiumTier.Tier2,
-			Discord.GuildPremiumTier.Tier3,
-		].includes(member.guild.premiumTier)
-
-		thread = await channel.threads.create({
+		thread = await createPrivateOrPublicThread(channel, {
 			autoArchiveDuration: threadArchiveDuration,
 			name: threadName,
-			type: canMakePrivateThreads
-				? Discord.ChannelType.PrivateThread
-				: Discord.ChannelType.PublicThread,
 			reason: `Help joining instructions for ${member.user.tag}`,
 		})
 	} else if (thread.archived) {
