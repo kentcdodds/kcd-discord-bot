@@ -1,4 +1,5 @@
 import * as Discord from 'discord.js'
+import * as Sentry from '@sentry/node'
 
 type MemberThreadCreateOptions = {
 	name: string
@@ -6,33 +7,29 @@ type MemberThreadCreateOptions = {
 	reason?: string
 }
 
-export async function guildSupportsPrivateThreads(
-	guild: Discord.Guild,
-): Promise<boolean> {
-	const freshGuild = await guild.fetch()
-
-	return (
-		freshGuild.features.includes(Discord.GuildFeature.PrivateThreads) ||
-		[
-			Discord.GuildPremiumTier.Tier2,
-			Discord.GuildPremiumTier.Tier3,
-		].includes(freshGuild.premiumTier)
-	)
-}
-
+// Discord made private threads available to all servers (permission-based, not
+// boost-gated), so gating on premiumTier/PRIVATE_THREADS wrongly forces public
+// threads on guilds below Boost Level 2. Always try private first and only fall
+// back to public when the API rejects it.
 export async function createPrivateOrPublicThread(
 	channel: Discord.TextChannel,
 	options: MemberThreadCreateOptions,
 ): Promise<Discord.ThreadChannel> {
-	if (await guildSupportsPrivateThreads(channel.guild)) {
-		try {
-			return await channel.threads.create({
-				...options,
-				type: Discord.ChannelType.PrivateThread,
-			})
-		} catch (error: unknown) {
-			if (!isPrivateThreadUnavailableError(error)) throw error
-		}
+	try {
+		return await channel.threads.create({
+			...options,
+			type: Discord.ChannelType.PrivateThread,
+		})
+	} catch (error: unknown) {
+		if (!isPrivateThreadUnavailableError(error)) throw error
+		Sentry.captureException(error, {
+			tags: { 'discord.fallback': 'public-thread' },
+			extra: {
+				guildId: channel.guildId,
+				channelId: channel.id,
+				threadName: options.name,
+			},
+		})
 	}
 
 	return channel.threads.create({
@@ -47,7 +44,6 @@ function isPrivateThreadUnavailableError(error: unknown) {
 	const unavailableCodes = new Set<number | string>([
 		Discord.RESTJSONErrorCodes.MissingAccess,
 		Discord.RESTJSONErrorCodes.MissingPermissions,
-		Discord.RESTJSONErrorCodes.CannotExecuteActionOnThisChannelType,
 		Discord.RESTJSONErrorCodes.GuildPremiumSubscriptionLevelTooLow,
 	])
 
